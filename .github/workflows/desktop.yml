@@ -1,7 +1,11 @@
 name: Build desktop app
 
+# Builds Windows, Mac and Linux downloads and publishes them as a GitHub release
+# named after the version in package.json. Runs when the `release` branch is pushed,
+# when a version tag is pushed, or by hand from the Actions tab.
 on:
   push:
+    branches: ['release']
     tags: ['v*']
   workflow_dispatch:
 
@@ -27,16 +31,31 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: notetime-${{ matrix.os }}
-          if-no-files-found: ignore
+          if-no-files-found: error
           path: |
             dist/*.exe
             dist/*.dmg
             dist/*.AppImage
-      - if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v2
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        run: echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+      - uses: actions/download-artifact@v4
         with:
-          name: NoteTime ${{ github.ref_name }}
-          files: |
-            dist/*.exe
-            dist/*.dmg
-            dist/*.AppImage
+          path: downloads
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.v.outputs.version }}
+          name: NoteTime v${{ steps.v.outputs.version }}
+          make_latest: true
+          body: |
+            **Windows:** `NoteTime-Setup-${{ steps.v.outputs.version }}.exe` installs NoteTime. `NoteTime-Portable-${{ steps.v.outputs.version }}.exe` runs without installing. If Windows shows "Windows protected your PC", click **More info → Run anyway**.
+            **Mac:** open the `.dmg` and drag NoteTime to Applications. The first time, right-click NoteTime and choose **Open**.
+            **Linux:** make the `.AppImage` executable and run it.
+            **iPhone / iPad:** open https://arjunpure.github.io/NoteTime/ in Safari, tap Share, then **Add to Home Screen**.
+          files: downloads/*
