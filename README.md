@@ -17,9 +17,9 @@ A notebook app for iPad, iPhone and laptops: type or write with a stylus, check 
 
 ## Get NoteTime
 
-**Use it online or on iPhone and iPad:** https://arjunpure.github.io/notetime/
+**Use it online or on iPhone and iPad:** https://arjunpure.github.io/NoteTime/
 
-**Download for PC:** https://github.com/ArjunPure/notetime/releases/latest
+**Download for PC:** https://github.com/ArjunPure/NoteTime/releases/latest
 
 | Device | How to install |
 |---|---|
