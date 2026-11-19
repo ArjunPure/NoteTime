@@ -589,7 +589,7 @@ const Ink = (() => {
   /* ---------- handwriting conversion ---------- */
   async function convert(onlySel){
     if (!M) return;
-    if (!S.sample){ toast('Converting handwriting needs NoteTime AI. Sign in to your account to use it.'); return }
+    if (!S.sample){ toast(window.NT_STANDALONE ? 'Converting handwriting uses Claude AI in the online version. Open it from notebook Settings → NoteTime AI.' : 'Converting handwriting needs NoteTime AI. Sign in to your account to use it.'); return }
     const list = (onlySel && sel ? [...sel.set] : M.strokes).filter(s => s.t !== 'highlighter');
     if (!list.length){ toast(onlySel ? 'Select some handwriting first.' : 'There is no handwriting on this page yet. Write with a pen first.'); return }
     const lim = await S.sample.limits().catch(() => null);

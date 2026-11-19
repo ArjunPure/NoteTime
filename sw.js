@@ -1,5 +1,5 @@
 /* NoteTime offline support: keeps the app working without a connection. */
-const VERSION = 'notetime-v1';
+const VERSION = 'notetime-v2';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest',
   'js/standalone.js', 'js/math.js', 'js/app.js', 'js/ink.js', 'js/io.js', 'js/share.js', 'js/extras.js',

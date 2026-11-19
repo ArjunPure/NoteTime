@@ -249,6 +249,11 @@ Bus fare for the week: 2.75 × 10 = 27.50`}]});
   S.expanded.add(math.id); S.expanded.add(bio.id);
 }
 
+/* ---------- online version (NoteTime AI through Claude) ---------- */
+const ONLINE_URL = 'https://claude.ai/artifact/SGYi3DxfG5tmDZ2u5G5UTs';
+const onlineBtn = (label = 'Open NoteTime with Claude AI') => `<a class="btn primary online-btn" href="${ONLINE_URL}" target="_blank" rel="noopener">${ic('spark')}${label}</a>`;
+const ONLINE_NOTE = 'NoteTime AI runs on Claude, using your Claude account, in the online version of NoteTime. Sign in to Claude there and the AI works with no key needed. To bring a notebook along, export it here (⋯ → Export → Backup) and restore it there (Home → Import).';
+
 /* ---------- theme ---------- */
 const LOGO = 'img/logo-128.png', LOGO_BIG = 'img/logo-256.png';
 function themeNow(){ const t = lsGet('notetime.theme') || 'system'; return t === 'light' || t === 'dark' ? t : 'system' }
@@ -852,10 +857,13 @@ function openSettings(){
   sh.innerHTML = `<div class="sheet-head"><h3>Notebook settings</h3><button class="iconbtn" id="sh-x" aria-label="Close settings">${I.close}</button></div>
   <div class="sheet-body">
     ${window.NT_STANDALONE ? `<div class="field"><span class="lbl">NoteTime AI</span>
-      <p class="note" style="margin:0">Paste your AI key from console.anthropic.com to turn on summaries, quizzes, handwriting to text and notes from files. The key stays on this device, and each use is billed to that account.</p>
+      <p class="note" style="margin:0">${ONLINE_NOTE}</p>
+      ${onlineBtn()}
+      <details class="own-key"><summary>Use an Anthropic API key instead</summary>
+      <p class="note" style="margin:0">Paste a key from console.anthropic.com to use NoteTime AI right here. It stays on this device, and each use is billed to that API account.</p>
       <div class="linkrow"><input class="input" id="ai-key" type="password" autocomplete="off" placeholder="${NTAI.hasKey() ? 'Key saved. Paste a new one to replace it' : 'Paste your AI key'}"><button class="btn primary" id="ai-key-save">Save</button></div>
       ${NTAI.hasKey() ? '<button class="btn ghost danger" id="ai-key-del" style="align-self:flex-start">Remove key</button>' : ''}
-      <span class="note" id="ai-key-msg"></span></div>` : ''}
+      <span class="note" id="ai-key-msg"></span></details></div>` : ''}
     <div class="field"><span class="lbl">Appearance</span><div class="seg" id="sh-theme">${[['light','Light'],['dark','Dark'],['system','Match system']].map(([k, l]) => `<button type="button" class="${themeNow() === k ? 'on' : ''}" data-v="${k}">${l}</button>`).join('')}</div></div>
     <div class="field"><span class="lbl">Paper</span>${paperOpts(s.paper)}</div>
     <div class="field"><span class="lbl">Paper color</span><div class="opts" data-set="color">${PAPER_COLORS.map(([k, l]) => `<button type="button" class="opt ${s.color === k ? 'on' : ''}" data-v="${k}"><span class="pv ${k !== 'auto' ? 'pc-' + k : ''}" style="background:var(--paper)"></span>${l}</button>`).join('')}</div></div>
@@ -969,7 +977,7 @@ function aiErr(e){
   if (c === 'invalid_json') return "NoteTime AI's reply came back in the wrong shape. Try again.";
   if (c === 'prompt_too_large') return 'This is too long to send at once. Try a shorter file or notebook.';
   if (c === 'images_unavailable') return "Images can't be sent to NoteTime AI in this view.";
-  if (c === 'no_key') return 'Add your AI key in notebook Settings to use NoteTime AI.';
+  if (c === 'no_key') return 'NoteTime AI runs with your Claude account in the online version. Open it from notebook Settings → NoteTime AI.';
   if (c === 'bad_key') return 'Your AI key was rejected. Check it in notebook Settings.';
   if (c === 'refused') return 'NoteTime AI declined that request.';
   if (c === 'invalid_request') return (e.message || 'NoteTime AI could not handle that request.');
@@ -1023,7 +1031,7 @@ function renderAI(){
       ${msgs.length ? `<button class="btn ghost" id="ai-clear" style="padding:5px 8px;font-size:12px">Clear</button>` : ''}
       <button class="iconbtn" id="ai-x" aria-label="Close NoteTime AI">${I.close}</button></div>
     <div class="ai-msgs" id="ai-msgs" aria-live="polite">
-      ${!S.sample ? `<div class="ai-intro">${window.NT_STANDALONE ? 'Add your AI key in notebook Settings (gear button) to ask questions, convert handwriting, get overviews, make notes from slides and video, and generate quizzes. Math checking works without it.' : 'NoteTime AI isn\'t available here. Sign in to your account to ask questions, convert handwriting, get overviews, make notes from slides and video, and generate quizzes. Math checking still works without it.'}</div>` :
+      ${!S.sample ? `<div class="ai-intro">${window.NT_STANDALONE ? ONLINE_NOTE + '</div><div style="padding:4px 2px">' + onlineBtn() : 'NoteTime AI isn\'t available here. Sign in to your account to ask questions, convert handwriting, get overviews, make notes from slides and video, and generate quizzes. Math checking still works without it.'}</div>` :
         !msgs.length ? `<div class="ai-intro">NoteTime AI reads every page of <b>${esc(nb.name)}</b>, your voice notes and the math checker's results. Ask anything, or start with one of these.</div>` : ''}
       ${msgs.map((m, i) => `<div class="msg ${m.role} ${m.err ? 'err' : ''}">${m.role === 'assistant' ? mdLite(m.content) : esc(m.content)}
         ${m.role === 'assistant' && !m.err && m.content ? `<div class="mact"><button data-add="${i}">Add to page</button><button data-copy="${i}">Copy</button>${Ink.V.t ? `<button data-say="${i}">Read aloud</button>` : ''}</div>` : ''}</div>`).join('')}
@@ -1111,7 +1119,7 @@ function renderOverview(){
       <div class="row-between"><span class="ai-tag">${I.spark}NoteTime AI summary</span>
         ${S.sample ? `<button class="btn ${ov ? '' : 'primary'}" id="ov-gen" ${busy ? 'disabled' : ''}>${ic(ov ? 'refresh' : 'spark')}${ov ? 'Refresh' : 'Create overview'}</button>` : ''}</div>
       <div id="ov-body">${busy ? '<div class="thinking"><span class="spin"></span>Reading your notebook… this can take up to a minute.</div>' : ov ? overviewHtml(ov) + `<div class="note">${stale ? '<span class="warn">Your notes changed after this overview was made. Refresh to update it.</span>' : `Made ${ago(ov.at)} from all ${nb.pages.length} page${nb.pages.length === 1 ? '' : 's'}.`}</div>` :
-        `<p class="muted" style="margin:0">${!S.sample && window.NT_STANDALONE ? 'Add your AI key in notebook Settings to turn on NoteTime AI summaries.' : S.sample ? 'NoteTime AI reads every page and voice note, then writes a short summary, the key points, terms to know and what to review next.' : "NoteTime AI summaries need you to be signed in. Sign in to your account to create one. Everything else on this page works without it."}</p>`}</div>
+        `<p class="muted" style="margin:0">${!S.sample && window.NT_STANDALONE ? ONLINE_NOTE + '</p><p style="margin:8px 0 0">' + onlineBtn() : S.sample ? 'NoteTime AI reads every page and voice note, then writes a short summary, the key points, terms to know and what to review next.' : "NoteTime AI summaries need you to be signed in. Sign in to your account to create one. Everything else on this page works without it."}</p>`}</div>
     </div>
     ${Object.keys(tagged).length ? `<div class="card"><h3>Color-coded notes</h3><div class="tag-groups">${Ink.TAGS.filter(t => tagged[t.k]).map(t => `<div class="tag-group"><div class="tg-head"><i class="hl hl-${t.k}">${t.label}</i><span class="note">${tagged[t.k].length}</span></div><ul>${tagged[t.k].slice(0, 12).map(x => `<li>${esc(x.text)}</li>`).join('')}</ul></div>`).join('')}</div></div>` : ''}
     ${allIssues.length ? `<div class="card"><h3>Math to fix</h3>${allIssues.map(r => `<div class="issue"><div class="k">${esc(r.title)}<span class="ln">Page ${r.page + 1}, line ${r.line + 1}</span></div><code>${esc(r.src)}</code><p>${esc(r.msg)}</p><div class="ia"><button class="btn" data-fix="${r.page}:${r.line}">Go to line</button></div></div>`).join('')}</div>` : ''}
@@ -1169,7 +1177,7 @@ function renderQuiz(){
         <div class="field"><span class="lbl">Questions</span><div class="seg" id="qz-n" style="max-width:280px">${[5, 8, 12].map(n => `<button class="${(S.qn || 5) === n ? 'on' : ''}" data-v="${n}">${n}</button>`).join('')}</div></div>
         <div class="field"><span class="lbl">Difficulty</span><div class="seg" id="qz-d" style="max-width:360px">${['Easy', 'Medium', 'Hard'].map(n => `<button class="${(S.qd || 'Medium') === n ? 'on' : ''}" data-v="${n}">${n}</button>`).join('')}</div></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          ${S.sample ? `<button class="btn primary" id="qz-ai">${ic('spark')}Generate quiz with NoteTime AI</button>` : ''}
+          ${S.sample ? `<button class="btn primary" id="qz-ai">${ic('spark')}Generate quiz with NoteTime AI</button>` : window.NT_STANDALONE ? onlineBtn('AI quizzes with Claude') : ''}
           <button class="btn ${S.sample ? '' : 'primary'}" id="qz-quick">Quick quiz without NoteTime AI</button>
           ${nb.quiz ? `<button class="btn" id="qz-retake">${ic('refresh')}Retake last quiz</button>` : ''}
         </div>

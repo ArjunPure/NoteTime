@@ -492,7 +492,7 @@ ${part.join('\n\n') || '(see images)'}`;
       </div>
       <div class="field" id="im-detail-f"><span class="lbl">Detail</span><div class="seg" id="im-detail"><button class="on" data-v="full">Detailed study notes</button><button data-v="brief">Quick summary</button></div></div>
       ${intoNb ? '' : `<div class="field"><label for="im-folder">Save in</label><select class="input" id="im-folder">${folderOptions(folderId)}</select></div>`}
-      ${S.sample ? '' : `<div class="banner">${ic('spark')}<div>Without NoteTime AI, NoteTime copies the text or transcript into tidy pages but can't summarize, color-code by meaning, or read photos and video frames. Sign in to your account for full study notes.</div></div>`}
+      ${S.sample ? '' : `<div class="banner">${ic('spark')}<div>Without NoteTime AI, NoteTime copies the text or transcript into tidy pages but can't summarize, color-code by meaning, or read photos and video frames. ${window.NT_STANDALONE ? ' Full study notes use Claude AI in the online version:' : ' Sign in to your account for full study notes.'}${window.NT_STANDALONE ? '<div style="margin-top:8px">' + onlineBtn() + '</div>' : ''}</div></div>`}
       <div class="steps" id="im-steps" hidden></div>`;
     const stopListening = () => { const v = $('#im-vid'); if (v) v.pause(); if (listening && Ink.V.d){ Ink.V.d.stop().catch(() => {}) } listening = false; if (Ink.V.target && Ink.V.target.video) Ink.V.target = null };
     const back = modal({title: intoNb ? 'Add notes from a file or video' : 'Make notes from a file or video', body, wide:true,

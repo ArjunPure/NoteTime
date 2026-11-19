@@ -118,7 +118,7 @@
   let clientP = null, clientKey = null;
   const getKey = () => { try { return ls && ls.getItem(KEY) || '' } catch { return '' } };
   async function client(){
-    const k = getKey(); if (!k) throw {code:'no_key', message:'Add your AI key in Settings to use NoteTime AI.'};
+    const k = getKey(); if (!k) throw {code:'no_key', message:'NoteTime AI runs with your Claude account in the online version.'};
     if (!clientP || clientKey !== k){
       clientKey = k;
       clientP = import(SDK_URL).then(m => new m.default({apiKey:k, dangerouslyAllowBrowser:true}));

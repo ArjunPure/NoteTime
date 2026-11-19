@@ -31,9 +31,13 @@ A notebook app for iPad, iPhone and laptops: type or write with a stylus, check 
 
 The desktop downloads aren't signed with a paid certificate yet. Windows may show "Windows protected your PC": click **More info → Run anyway**. On Mac, right-click the app and choose **Open** the first time.
 
-## NoteTime AI
+## NoteTime AI (Claude)
 
-The installed app needs your own AI key for NoteTime AI. Create one at console.anthropic.com, then open any notebook, tap the gear button, and paste it under **NoteTime AI**. The key is stored only on that device, and each AI request is billed to that account. Everything else works without a key.
+NoteTime AI runs on Claude. The full version of NoteTime lives on claude.ai, where it uses your Claude account: sign in to Claude and the AI works with no key, your notebooks sync across your devices, and live sharing works.
+
+**Online version (AI, sync, sharing):** https://claude.ai/artifact/SGYi3DxfG5tmDZ2u5G5UTs. It's private to the owner unless shared from the Share button on that page.
+
+The downloaded PC app and the iPhone/iPad website work offline, without an account, and keep notebooks on the device. Their AI buttons open the online version. To move a notebook, export it (**⋯ → Export → Backup**) and restore it in the online version (**Home → Import → Restore a NoteTime backup**). People with an Anthropic API key can paste it in notebook Settings to use the AI directly in the downloaded app instead.
 
 ## Building it yourself
 
