@@ -1,8 +1,8 @@
 /* NoteTime offline support: keeps the app working without a connection. */
-const VERSION = 'notetime-v2';
+const VERSION = 'notetime-1.0.2';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest',
-  'js/standalone.js', 'js/math.js', 'js/app.js', 'js/ink.js', 'js/io.js', 'js/share.js', 'js/extras.js',
+  'js/standalone.js', 'js/math.js', 'js/app.js', 'js/ink.js', 'js/io.js', 'js/share.js', 'js/extras.js', 'js/updates.js',
   'img/logo-128.png', 'img/logo-256.png', 'img/icon-192.png', 'img/icon-512.png', 'img/apple-touch-icon.png'
 ];
 self.addEventListener('install', e => {

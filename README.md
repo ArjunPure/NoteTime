@@ -39,6 +39,18 @@ NoteTime AI runs on Claude. The full version of NoteTime lives on claude.ai, whe
 
 The downloaded PC app and the iPhone/iPad website work offline, without an account, and keep notebooks on the device. Their AI buttons open the online version. To move a notebook, export it (**⋯ → Export → Backup**) and restore it in the online version (**Home → Import → Restore a NoteTime backup**). People with an Anthropic API key can paste it in notebook Settings to use the AI directly in the downloaded app instead.
 
+## Updates
+
+NoteTime tells you when a new version is out: a banner drops down at the top of the screen with **Update now**.
+
+- **Windows (installed) and Linux:** the update downloads inside the app, then **Restart now** finishes it. Your notebooks are kept.
+- **Mac and the portable Windows app:** **Update now** opens the download page. Install the new version over the old one.
+- **iPhone, iPad and the website:** **Update now** reloads into the new version.
+
+Versions before 1.0.2 don't have the update banner, so download 1.0.2 once by hand. Every update after that arrives in the app.
+
+To publish an update: raise `version` in `package.json`, list the changes in `releaseNotes`, run `python3 build.py`, push to `main`, then push `main` to the `release` branch.
+
 ## Building it yourself
 
 - Desktop app: `npm install`, then `npm start` to run it or `npm run dist` to package it. Pushing a tag like `v1.0.1` makes GitHub build Windows, Mac and Linux downloads and attach them to a release.
