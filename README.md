@@ -15,19 +15,30 @@ A notebook app for iPad, iPhone and laptops: type or write with a stylus, check 
 - **Export** to PDF, PNG, Markdown, text or a NoteTime backup, plus print-ready PDFs.
 - **NoteTime AI** (optional): chat about a notebook, overviews, quizzes, handwriting to text, and notes from PowerPoint, PDF, Word, photos and video.
 
-## Install it
+## Get NoteTime
 
-Open the app's web address (see below), then:
+**Use it online or on iPhone and iPad:** https://arjunpure.github.io/notetime/
 
-- **iPhone and iPad**: open it in Safari, tap the Share button, then **Add to Home Screen**.
-- **Mac**: in Safari choose **File → Add to Dock**. In Chrome or Edge, click the install icon in the address bar.
-- **Windows, ChromeOS, Linux**: in Chrome or Edge, click the install icon in the address bar, or open the browser menu and choose **Install NoteTime**.
+**Download for PC:** https://github.com/ArjunPure/notetime/releases/latest
 
-The installed app opens in its own window, works offline after the first visit, and keeps notebooks on that device.
+| Device | How to install |
+|---|---|
+| Windows | Download `NoteTime-Setup-x.y.z.exe` and run it. `NoteTime-Portable-x.y.z.exe` runs without installing. |
+| Mac | Download `NoteTime-x.y.z-mac.dmg`, open it, and drag NoteTime to Applications. |
+| Linux | Download `NoteTime-x.y.z-linux.AppImage`, mark it executable, and run it. |
+| iPhone / iPad | Open the website above in Safari, tap the Share button, then **Add to Home Screen**. It opens full screen with its own icon and works offline. |
+| Chromebook | Open the website in Chrome and choose **Install NoteTime** from the address bar or menu. |
+
+The desktop downloads aren't signed with a paid certificate yet. Windows may show "Windows protected your PC": click **More info → Run anyway**. On Mac, right-click the app and choose **Open** the first time.
 
 ## NoteTime AI
 
 The installed app needs your own AI key for NoteTime AI. Create one at console.anthropic.com, then open any notebook, tap the gear button, and paste it under **NoteTime AI**. The key is stored only on that device, and each AI request is billed to that account. Everything else works without a key.
+
+## Building it yourself
+
+- Desktop app: `npm install`, then `npm start` to run it or `npm run dist` to package it. Pushing a tag like `v1.0.1` makes GitHub build Windows, Mac and Linux downloads and attach them to a release.
+- Website: served by GitHub Pages from the `main` branch.
 
 ## Publish it with GitHub Pages
 
@@ -45,9 +56,13 @@ The installed app needs your own AI key for NoteTime AI. Create one at console.a
 | `js/` | App code: `app.js` (library, notebooks, AI features), `ink.js` (drawing), `math.js` (math checking), `io.js` (import and export), `share.js` (live sharing in the hosted version), `extras.js` (undo, versions, zoom, fonts, video), `standalone.js` (on-device storage and AI key for the installed app). |
 | `img/` | Logo and app icons. |
 | `manifest.webmanifest`, `sw.js` | Make the app installable and available offline. |
+| `desktop/main.js`, `package.json` | The desktop app (Electron) and its packaging settings. |
+| `.github/workflows/desktop.yml` | Builds the Windows, Mac and Linux downloads on GitHub. |
 
 ## Notes on the installed app
 
 - Notebooks are saved on each device, so they don't sync between devices. Use **⋯ → Export → Backup** on one device and **Home → Import → Restore a NoteTime backup** on another to move them.
 - Live sharing with other people is only available in the hosted version.
 - Voice typing uses the browser's speech recognition, which works in Safari and Chrome.
+
+Made with Claude.
