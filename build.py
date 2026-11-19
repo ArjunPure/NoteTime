@@ -27,7 +27,7 @@ take(r'<style>.*?</style>')
 head = '\n'.join([
     '<meta charset="utf-8">',
     '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">',
-    '<meta name="theme-color" content="#2747A8">',
+    '<meta name="theme-color" content="#760B98">',
     '<meta name="mobile-web-app-capable" content="yes">',
     '<meta name="apple-mobile-web-app-capable" content="yes">',
     '<meta name="apple-mobile-web-app-title" content="NoteTime">',

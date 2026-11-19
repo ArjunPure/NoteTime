@@ -1,7 +1,7 @@
 {
   "name": "notetime",
   "productName": "NoteTime",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Notebooks with stylus drawing, math checking, voice notes and study tools.",
   "author": "ArjunPure",
   "license": "UNLICENSED",
@@ -72,9 +72,8 @@
   },
   "homepage": "https://arjunpure.github.io/NoteTime/",
   "releaseNotes": [
-    "Update NoteTime from inside the app",
-    "NoteTime AI opens with your Claude account",
-    "Fixes and polish"
+    "New NoteTime logo",
+    "Updates now install from inside the app"
   ],
   "dependencies": {
     "electron-updater": "6.3.9"
