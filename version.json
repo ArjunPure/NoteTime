@@ -1,7 +1,7 @@
 {
-  "version": "1.0.3",
+  "version": "1.0.4",
   "notes": [
-    "New NoteTime logo",
-    "Updates now install from inside the app"
+    "NoteTime is now NoteTip",
+    "Your notebooks and settings carry over"
   ]
 }

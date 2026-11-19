@@ -1,7 +1,7 @@
 {
   "name": "notetime",
-  "productName": "NoteTime",
-  "version": "1.0.3",
+  "productName": "NoteTip",
+  "version": "1.0.4",
   "description": "Notebooks with stylus drawing, math checking, voice notes and study tools.",
   "author": "ArjunPure",
   "license": "UNLICENSED",
@@ -17,7 +17,7 @@
   },
   "build": {
     "appId": "io.github.arjunpure.notetime",
-    "productName": "NoteTime",
+    "productName": "NoteTip",
     "files": [
       "index.html",
       "manifest.webmanifest",
@@ -38,10 +38,10 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "NoteTime-Setup-${version}.${ext}"
+      "artifactName": "NoteTip-Setup-${version}.${ext}"
     },
     "portable": {
-      "artifactName": "NoteTime-Portable-${version}.${ext}"
+      "artifactName": "NoteTip-Portable-${version}.${ext}"
     },
     "mac": {
       "target": [
@@ -49,7 +49,7 @@
       ],
       "icon": "img/icon-512.png",
       "category": "public.app-category.education",
-      "artifactName": "NoteTime-${version}-mac.${ext}"
+      "artifactName": "NoteTip-${version}-mac.${ext}"
     },
     "linux": {
       "target": [
@@ -57,23 +57,23 @@
       ],
       "icon": "img/icon-512.png",
       "category": "Education",
-      "artifactName": "NoteTime-${version}-linux.${ext}"
+      "artifactName": "NoteTip-${version}-linux.${ext}"
     },
     "publish": {
       "provider": "github",
       "owner": "ArjunPure",
-      "repo": "NoteTime",
+      "repo": "NoteTip",
       "releaseType": "release"
     }
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ArjunPure/NoteTime.git"
+    "url": "https://github.com/ArjunPure/NoteTip.git"
   },
-  "homepage": "https://arjunpure.github.io/NoteTime/",
+  "homepage": "https://arjunpure.github.io/NoteTip/",
   "releaseNotes": [
-    "New NoteTime logo",
-    "Updates now install from inside the app"
+    "NoteTime is now NoteTip",
+    "Your notebooks and settings carry over"
   ],
   "dependencies": {
     "electron-updater": "6.3.9"

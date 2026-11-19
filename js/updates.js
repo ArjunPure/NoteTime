@@ -1,7 +1,7 @@
 "use strict";
-/* NoteTime updates: a banner at the top of the screen when a newer version is available. */
+/* NoteTip updates: a banner at the top of the screen when a newer version is available. */
 const Updates = (() => {
-  const NOTES_URL = 'https://raw.githubusercontent.com/ArjunPure/NoteTime/main/version.json';
+  const NOTES_URL = 'https://raw.githubusercontent.com/ArjunPure/NoteTip/main/version.json';
   let shown = null, lastCheck = 0, offs = [];
   const newer = (a, b) => { const pa = String(a).split('.').map(Number), pb = String(b).split('.').map(Number); for (let i = 0; i < 3; i++){ if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) > (pb[i] || 0) } return false };
   async function notesFor(version, url){
@@ -27,7 +27,7 @@ const Updates = (() => {
     const old = $('.upd'); if (old) old.parentNode.removeChild(old);
     const d = document.createElement('div'); d.className = 'upd'; d.setAttribute('role', 'alertdialog'); d.setAttribute('aria-label', 'Update available');
     d.innerHTML = `<img class="upd-logo" src="${LOGO}" alt="">
-      <div class="upd-t"><b>NoteTime ${esc(info.version)} is here</b>
+      <div class="upd-t"><b>NoteTip ${esc(info.version)} is here</b>
         <span>${info.notes.length ? info.notes.slice(0, 3).map(esc).join(' · ') : 'A new version is ready with fixes and improvements.'}</span>
         <small>You have ${esc(info.current)}</small>
         <div class="upd-bar" hidden><i></i></div></div>
@@ -60,7 +60,7 @@ const Updates = (() => {
     }
     if (!info.selfUpdate){
       await window.NTDesktop.downloadUpdate();
-      status(d, 'The download page opened in your browser. Install the new version, then open NoteTime again. Your notebooks stay on this computer.');
+      status(d, 'The download page opened in your browser. Install the new version, then open NoteTip again. Your notebooks stay on this computer.');
       go.textContent = 'Open download page again'; go.onclick = () => window.NTDesktop.openDownloads(); later.textContent = 'Close';
       return;
     }
@@ -68,7 +68,7 @@ const Updates = (() => {
     const bar = $('.upd-bar', d); bar.hidden = false; status(d, 'Downloading the update…');
     offs.push(window.NTDesktop.on('update:progress', p => { $('i', bar).style.width = p + '%'; status(d, `Downloading the update… ${p}%`) }));
     offs.push(window.NTDesktop.on('update:ready', () => {
-      bar.hidden = true; status(d, 'Update downloaded. NoteTime restarts to finish, and your notebooks are kept.');
+      bar.hidden = true; status(d, 'Update downloaded. NoteTip restarts to finish, and your notebooks are kept.');
       go.disabled = false; go.textContent = 'Restart now';
       go.onclick = () => { try { Store.flushAll() } catch {} setTimeout(() => window.NTDesktop.installUpdate(), 300) };
       later.hidden = false; later.textContent = 'Restart later';
@@ -79,7 +79,7 @@ const Updates = (() => {
       go.textContent = 'Open download page'; go.onclick = () => window.NTDesktop.openDownloads();
     }));
     const r = await window.NTDesktop.downloadUpdate();
-    if (r === 'opened'){ bar.hidden = true; later.hidden = false; go.disabled = false; status(d, 'The download page opened in your browser. Install the new version, then open NoteTime again.') }
+    if (r === 'opened'){ bar.hidden = true; later.hidden = false; go.disabled = false; status(d, 'The download page opened in your browser. Install the new version, then open NoteTip again.') }
   }
   setTimeout(check, 2500);
   setInterval(check, 6 * 3600e3);

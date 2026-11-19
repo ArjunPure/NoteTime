@@ -1,5 +1,5 @@
 "use strict";
-/* NoteTime import/export: PDF/PNG/Markdown/text/backup export, print-ready PDF, and notes from slides & documents. */
+/* NoteTip import/export: PDF/PNG/Markdown/text/backup export, print-ready PDF, and notes from slides & documents. */
 const IO = (() => {
   const LIBS = {
     jspdf:'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
@@ -130,7 +130,7 @@ const IO = (() => {
   }
 
   function toMarkdown(nb, pages, o){
-    const lines = [`# ${nb.name}`, '', `_Exported from NoteTime on ${new Date().toLocaleDateString()}_`, ''];
+    const lines = [`# ${nb.name}`, '', `_Exported from NoteTip on ${new Date().toLocaleDateString()}_`, ''];
     pages.forEach(p => {
       const i = nb.pages.indexOf(p);
       lines.push(`## Page ${i + 1}`, '', p.text.replace(/^#\s+/gm, '### '), '');
@@ -150,7 +150,7 @@ const IO = (() => {
   function backup(nb){
     const ink = {}; nb.pages.forEach(p => { const s = S.ink.get(nb.id + '_' + p.id); if (s && s.length) ink[p.id] = s });
     const {chat, ...rest} = nb;
-    return JSON.stringify({app:'NoteTime', kind:'notebook-backup', version:2, exportedAt:new Date().toISOString(), notebook:rest, ink});
+    return JSON.stringify({app:'NoteTip', kind:'notebook-backup', version:2, exportedAt:new Date().toISOString(), notebook:rest, ink});
   }
   async function makePdf(canvases, size, title){
     await loadScript(LIBS.jspdf);
@@ -182,7 +182,7 @@ const IO = (() => {
     const st = {fmt: print ? 'pdf' : 'pdf', pages:'all', lines:true, ink:true, voice:true, size: print ? 'letter' : 'fit', white:print};
     const fmts = [['pdf','PDF','All pages with handwriting'],['png','Image','PNG of each page'],['md','Markdown','Typed text, for other apps'],['txt','Plain text','Typed text only'],['json','Backup','Everything, to restore later']];
     const body = `
-      ${print ? `<div class="banner">${ic('print')}<div>This page can't open your browser's print dialog, so NoteTime makes a print-ready PDF sized to your paper. Open it and print from your PDF viewer.</div></div>` :
+      ${print ? `<div class="banner">${ic('print')}<div>This page can't open your browser's print dialog, so NoteTip makes a print-ready PDF sized to your paper. Open it and print from your PDF viewer.</div></div>` :
         `<div class="field"><span class="lbl">Format</span><div class="opts fmt" data-g="fmt">${fmts.map(([k, l, d]) => `<button type="button" class="opt ${st.fmt === k ? 'on' : ''}" data-v="${k}"><b>${l}</b><span>${d}</span></button>`).join('')}</div></div>`}
       <div class="ex-grid">
         <div class="ex-opts">
@@ -247,7 +247,7 @@ const IO = (() => {
       const r = await save(`${base}${print ? '-print' : ''}.pdf`, blob);
       if (r === 'ok' && print) toast('Print PDF saved. Open it and print from your PDF viewer.');
       if (r === 'ext'){
-        toast("PDF downloads aren't turned on here yet, so NoteTime saved images of each page instead.");
+        toast("PDF downloads aren't turned on here yet, so NoteTip saved images of each page instead.");
         let r2 = 'ok';
         for (let i = 0; i < canvases.length && r2 === 'ok'; i++){ const b = await new Promise(res => canvases[i].toBlob(res, 'image/png')); r2 = await save(`${slug(nb.name)}-page-${nb.pages.indexOf(pages[i]) + 1}.png`, b) }
         if (r2 === 'unavailable'){ closeModal(); imageFallback(canvases); return }
@@ -266,13 +266,13 @@ const IO = (() => {
       const f = inp.files[0]; if (!f) return;
       try {
         const data = JSON.parse(await f.text());
-        if (!data || data.app !== 'NoteTime' || !data.notebook || !Array.isArray(data.notebook.pages)) throw new Error('bad');
+        if (!data || !['NoteTip', 'NoteTip'].includes(data.app) || !data.notebook || !Array.isArray(data.notebook.pages)) throw new Error('bad');
         const nb = {...data.notebook, id:uid(), parentId:folderId || null, chat:[], example:false};
         const map = {}; nb.pages = nb.pages.map(p => { const id = uid(); map[p.id] = id; return {...p, id} });
         Object.entries(data.ink || {}).forEach(([pid, s]) => { if (map[pid] && Array.isArray(s)) Store.putInk(nb.id + '_' + map[pid], s, 50) });
         if (S.items.has(data.notebook.id) || notebooks().some(x => x.name === nb.name)) nb.name += ' (restored)';
         Store.put(nb, 50); toast(`Restored “${nb.name}”`); go('#nb-' + nb.id);
-      } catch { toast("That file isn't a NoteTime backup. Choose a .notetime.json file exported from NoteTime.") }
+      } catch { toast("That file isn't a NoteTip backup. Choose a .notetime.json file exported from NoteTip.") }
     };
     inp.click();
   }
@@ -362,7 +362,7 @@ const IO = (() => {
     }
     if (/^image\//.test(file.type)) return {kind:'images', unit:'images', units:[], images:[file]};
     if (/\.(ppt|doc|key|pages)$/.test(name)) throw new Error('That is an older or Apple format. Save it as .pptx, .docx or PDF first, then upload it again.');
-    throw new Error('NoteTime can read PowerPoint (.pptx), PDF, Word (.docx), text files and images.');
+    throw new Error('NoteTip can read PowerPoint (.pptx), PDF, Word (.docx), text files and images.');
   }
 
   /* ---------- import: notes ---------- */
@@ -467,7 +467,7 @@ ${part.join('\n\n') || '(see images)'}`;
     let file = null, caps = null, ctl = null, vurl = null, tr = [], listening = false;
     const canListen = !!(Ink.V && Ink.V.d);
     const body = `
-      <p class="muted" style="margin:0">${intoNb ? `New pages will be added to the end of “${esc(intoNb.name)}”.` : 'NoteTime reads your file or video and writes study notes as a new notebook.'} Lines are color-coded:</p>
+      <p class="muted" style="margin:0">${intoNb ? `New pages will be added to the end of “${esc(intoNb.name)}”.` : 'NoteTip reads your file or video and writes study notes as a new notebook.'} Lines are color-coded:</p>
       <div class="legend">${Ink.TAGS.map(t => `<i class="hl-${t.k}">${t.label}</i>`).join('')}</div>
       <label class="drop" id="im-drop" tabindex="0">
         <input type="file" id="im-file" accept=".pptx,.pdf,.docx,.txt,.md,image/png,image/jpeg,image/webp,video/*,.mp4,.m4v,.mov,.webm" hidden>
@@ -492,7 +492,7 @@ ${part.join('\n\n') || '(see images)'}`;
       </div>
       <div class="field" id="im-detail-f"><span class="lbl">Detail</span><div class="seg" id="im-detail"><button class="on" data-v="full">Detailed study notes</button><button data-v="brief">Quick summary</button></div></div>
       ${intoNb ? '' : `<div class="field"><label for="im-folder">Save in</label><select class="input" id="im-folder">${folderOptions(folderId)}</select></div>`}
-      ${S.sample ? '' : `<div class="banner">${ic('spark')}<div>Without NoteTime AI, NoteTime copies the text or transcript into tidy pages but can't summarize, color-code by meaning, or read photos and video frames. ${window.NT_STANDALONE ? ' Full study notes use Claude AI in the online version:' : ' Sign in to your account for full study notes.'}${window.NT_STANDALONE ? '<div style="margin-top:8px">' + onlineBtn() + '</div>' : ''}</div></div>`}
+      ${S.sample ? '' : `<div class="banner">${ic('spark')}<div>Without NoteTip AI, NoteTip copies the text or transcript into tidy pages but can't summarize, color-code by meaning, or read photos and video frames. ${window.NT_STANDALONE ? ' Full study notes use Claude AI in the online version:' : ' Sign in to your account for full study notes.'}${window.NT_STANDALONE ? '<div style="margin-top:8px">' + onlineBtn() + '</div>' : ''}</div></div>`}
       <div class="steps" id="im-steps" hidden></div>`;
     const stopListening = () => { const v = $('#im-vid'); if (v) v.pause(); if (listening && Ink.V.d){ Ink.V.d.stop().catch(() => {}) } listening = false; if (Ink.V.target && Ink.V.target.video) Ink.V.target = null };
     const back = modal({title: intoNb ? 'Add notes from a file or video' : 'Make notes from a file or video', body, wide:true,
@@ -508,7 +508,7 @@ ${part.join('\n\n') || '(see images)'}`;
           $('#im-video', b).hidden = !vidMode;
           if (vidMode){ if (vurl) URL.revokeObjectURL(vurl); vurl = URL.createObjectURL(f); vid.src = vurl; tr = []; vid.onerror = () => toast("This browser can't play that video. Try an .mp4 (H.264) or .webm file.") }
         };
-        const setCaps = f => { caps = f; $('#im-capname', b).textContent = f.name; f.text().then(t => { tr = parseCaptions(t); renderLive(); if (!tr.length) toast("That captions file didn't have any lines NoteTime could read.") }) };
+        const setCaps = f => { caps = f; $('#im-capname', b).textContent = f.name; f.text().then(t => { tr = parseCaptions(t); renderLive(); if (!tr.length) toast("That captions file didn't have any lines NoteTip could read.") }) };
         inp.onchange = () => pick(inp.files[0]);
         $('#im-capfile', b).onchange = e => e.target.files[0] && setCaps(e.target.files[0]);
         drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); inp.click() } };
@@ -559,10 +559,10 @@ ${part.join('\n\n') || '(see images)'}`;
         if (video){
           const vid = $('#im-vid', b);
           if (!vid.duration || !isFinite(vid.duration)) await new Promise(r => { vid.onloadedmetadata = r; setTimeout(r, 4000) });
-          if (!vid.duration) throw new Error("NoteTime couldn't read that video. Try an .mp4 (H.264) or .webm file.");
+          if (!vid.duration) throw new Error("NoteTip couldn't read that video. Try an .mp4 (H.264) or .webm file.");
           const nFrames = lim && lim.images ? Math.min(lim.images.maxCount || 5, 12, Math.max(3, Math.ceil(vid.duration / 90))) : 0;
           const frames = await grabFrames(vid, nFrames, step);
-          if (!tr.length && !frames.length) throw new Error(S.sample ? "There's no transcript yet. Listen to the video or add a captions file first." : 'Without NoteTime AI, NoteTime needs a transcript. Listen to the video or add a captions file first.');
+          if (!tr.length && !frames.length) throw new Error(S.sample ? "There's no transcript yet. Listen to the video or add a captions file first." : 'Without NoteTip AI, NoteTip needs a transcript. Listen to the video or add a captions file first.');
           let url = null;
           if (S.assets && file.size <= 20 * 1024 * 1024){ step('Saving the video'); try { url = (await S.assets.upload(file)).url } catch (e){ console.warn(e) } }
           let text = tr; if (JSON.stringify(text).length > 120000){ text = []; let n = 0; for (const l of tr){ n += l.text.length + 20; if (n > 120000) break; text.push(l) } }
@@ -570,8 +570,8 @@ ${part.join('\n\n') || '(see images)'}`;
           src = {kind:'video', unit:'minutes', units:transcriptUnits(tr), images:frames.map(f => f.blob), frameTimes:frames.map(f => fmtTime(f.t))};
         } else {
           src = await extract(file, step, lim && lim.images ? Math.min(lim.images.maxCount || 5, 8) : 0);
-          if (!src.units.some(u => u.text.trim() || u.title) && !src.images.length) throw new Error("NoteTime couldn't find any text in that file.");
-          if (src.kind === 'images' && !S.sample) throw new Error('Reading photos needs NoteTime AI. Sign in to your account and try again.');
+          if (!src.units.some(u => u.text.trim() || u.title) && !src.images.length) throw new Error("NoteTip couldn't find any text in that file.");
+          if (src.kind === 'images' && !S.sample) throw new Error('Reading photos needs NoteTip AI. Sign in to your account and try again.');
         }
         let notes;
         if (S.sample) notes = await aiNotes(src, file.name, detail, step, ctl.signal);

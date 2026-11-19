@@ -30,7 +30,7 @@ head = '\n'.join([
     '<meta name="theme-color" content="#760B98">',
     '<meta name="mobile-web-app-capable" content="yes">',
     '<meta name="apple-mobile-web-app-capable" content="yes">',
-    '<meta name="apple-mobile-web-app-title" content="NoteTime">',
+    '<meta name="apple-mobile-web-app-title" content="NoteTip">',
     '<meta name="apple-mobile-web-app-status-bar-style" content="default">',
     '<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>',
     *head_parts,

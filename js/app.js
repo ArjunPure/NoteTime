@@ -1,5 +1,5 @@
 "use strict";
-/* NoteTime core: storage, library, notebooks, editor, AI, overview, quiz. */
+/* NoteTip core: storage, library, notebooks, editor, AI, overview, quiz. */
 const I = {
   sidebar:'<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg>',
   plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
@@ -208,7 +208,7 @@ n = 9`}
     settings:{paper:'lined', color:'auto', spacing:'medium', font:'hand', math:true, answers:true, angles:'rad', colors:true},
     pages:[{id:uid(), voice:[], text:`# Derivatives and integrals
 Formula: power rule d/dx xⁿ = n·xⁿ⁻¹
-Main idea: type words like integral, derivative or limit and NoteTime writes the math symbols for you.
+Main idea: type words like integral, derivative or limit and NoteTip writes the math symbols for you.
 
 d/dx (x³ + 2x) = 3x² + 2
 d/dx sin(x²) =
@@ -249,10 +249,10 @@ Bus fare for the week: 2.75 × 10 = 27.50`}]});
   S.expanded.add(math.id); S.expanded.add(bio.id);
 }
 
-/* ---------- online version (NoteTime AI through Claude) ---------- */
+/* ---------- online version (NoteTip AI through Claude) ---------- */
 const ONLINE_URL = 'https://claude.ai/artifact/SGYi3DxfG5tmDZ2u5G5UTs';
-const onlineBtn = (label = 'Open NoteTime with Claude AI') => `<a class="btn primary online-btn" href="${ONLINE_URL}" target="_blank" rel="noopener">${ic('spark')}${label}</a>`;
-const ONLINE_NOTE = 'NoteTime AI runs on Claude, using your Claude account, in the online version of NoteTime. Sign in to Claude there and the AI works with no key needed. To bring a notebook along, export it here (⋯ → Export → Backup) and restore it there (Home → Import).';
+const onlineBtn = (label = 'Open NoteTip with Claude AI') => `<a class="btn primary online-btn" href="${ONLINE_URL}" target="_blank" rel="noopener">${ic('spark')}${label}</a>`;
+const ONLINE_NOTE = 'NoteTip AI runs on Claude, using your Claude account, in the online version of NoteTip. Sign in to Claude there and the AI works with no key needed. To bring a notebook along, export it here (⋯ → Export → Backup) and restore it there (Home → Import).';
 
 /* ---------- theme ---------- */
 const LOGO = 'img/logo-128.png', LOGO_BIG = 'img/logo-256.png';
@@ -269,7 +269,7 @@ const themeBtn = () => `<button class="iconbtn theme-btn" data-theme-btn aria-la
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-theme-btn]'); if (b){ e.stopPropagation(); themeMenu(b) } }, true);
 try { matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (themeNow() === 'system') applyTheme() }) } catch {}
 applyTheme();
-const brandTop = () => `<div class="top-brand" aria-hidden="true"><img src="${LOGO}" alt=""><span>NoteTime</span></div>`;
+const brandTop = () => `<div class="top-brand" aria-hidden="true"><img src="${LOGO}" alt=""><span>NoteTip</span></div>`;
 function fitBrand(){
   const tb = $('.topbar'), br = tb && $('.top-brand', tb); if (!br) return;
   br.hidden = false; const r = br.getBoundingClientRect();
@@ -367,7 +367,7 @@ function renderSidebar(){
   }
   const searchFocused = document.activeElement && document.activeElement.id === 'sb-q';
   sb.innerHTML = `
-    <div class="sb-head"><div class="brand"><img class="brand-logo" src="${LOGO}" alt="">NoteTime</div>
+    <div class="sb-head"><div class="brand"><img class="brand-logo" src="${LOGO}" alt="">NoteTip</div>
       ${themeBtn()}<button class="iconbtn" id="sb-close" aria-label="Hide library">${I.chevL}</button></div>
     <label class="sb-search">${ic('search')}<input id="sb-q" placeholder="Search notebooks and notes" value="${esc(S.query)}" aria-label="Search"></label>
     <div class="sb-actions"><button class="btn" id="sb-nb">${ic('plus')}Notebook</button><button class="btn" id="sb-folder">${ic('plus')}Folder</button></div>
@@ -560,10 +560,10 @@ function renderHome(){
   <div class="home">
     <div class="home-head">
       <div class="home-title">
-        ${folder ? '' : `<img class="home-logo" src="${LOGO_BIG}" alt="NoteTime logo">`}
+        ${folder ? '' : `<img class="home-logo" src="${LOGO_BIG}" alt="NoteTip logo">`}
         <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
         <span class="eyebrow">${folder ? 'Folder' : 'Your notebooks'}</span>
-        <h1>${folder ? esc(folder.name) : 'NoteTime'}</h1>
+        <h1>${folder ? esc(folder.name) : 'NoteTip'}</h1>
         ${recent ? `<span class="muted">Last edited: <a href="#nb-${recent.id}" style="color:var(--accent)">${esc(recent.name)}</a>, ${ago(recent.updatedAt)}</span>` : ''}
         </div>
       </div>
@@ -577,10 +577,10 @@ function renderHome(){
     </div>
     <button class="import-card" id="h-import2">
       <span class="ic-wrap">${I.slides}</span>
-      <span class="ttl"><b>Turn slides, documents or videos into notes</b><span>Upload a PowerPoint, PDF, Word file, photos or a lecture video. NoteTime writes color-coded study notes you can edit, quiz on and annotate.</span></span>
+      <span class="ttl"><b>Turn slides, documents or videos into notes</b><span>Upload a PowerPoint, PDF, Word file, photos or a lecture video. NoteTip writes color-coded study notes you can edit, quiz on and annotate.</span></span>
       <span class="legend">${Ink.TAGS.slice(0, 5).map(t => `<i class="hl-${t.k}">${t.label}</i>`).join('')}</span>
     </button>
-    ${S.mode === 'local' && !window.NT_STANDALONE ? `<div class="banner">${ic('book')}<div>Your notebooks are saved in this browser only. Sign in and open NoteTime from your account to keep them synced.</div></div>` : ''}
+    ${S.mode === 'local' && !window.NT_STANDALONE ? `<div class="banner">${ic('book')}<div>Your notebooks are saved in this browser only. Sign in and open NoteTip from your account to keep them synced.</div></div>` : ''}
     ${fs.length ? `<section class="section"><div class="section-head"><h2>Folders</h2><span class="chip">${fs.length}</span></div>
       <div class="grid-folders">${fs.map(f => `<div class="folder-card" data-open="folder-${f.id}" data-drop="${f.id}" draggable="true" data-drag="${f.id}" role="link" tabindex="0">
         <span class="folder-ic">${folderSvg(esc(f.color || COVERS[0]))}</span>
@@ -588,7 +588,7 @@ function renderHome(){
         <button class="more" data-menu="${f.id}" aria-label="More for ${esc(f.name)}">${I.more}</button></div>`).join('')}</div></section>` : ''}
     ${!folder && sharedWithMe().length ? `<section class="section"><div class="section-head"><h2>Shared with me</h2><span class="chip">${sharedWithMe().length}</span><span class="note">Notebooks other people shared. You work in them together.</span></div>
       <div class="grid-books">${sharedWithMe().map(bookCard).join('')}</div></section>` : ''}
-    ${!folder && sharedByMe().length ? `<section class="section"><div class="section-head"><h2>Shared by you</h2><span class="chip">${sharedByMe().length}</span><span class="note">Everyone you've invited to NoteTime can open these.</span></div>
+    ${!folder && sharedByMe().length ? `<section class="section"><div class="section-head"><h2>Shared by you</h2><span class="chip">${sharedByMe().length}</span><span class="note">Everyone you've invited to NoteTip can open these.</span></div>
       <div class="grid-books">${sharedByMe().map(bookCard).join('')}</div></section>` : ''}
     <section class="section"><div class="section-head"><h2>Notebooks</h2><span class="chip">${ns.length}</span></div>
       <div class="grid-books">${ns.map(bookCard).join('')}
@@ -605,7 +605,7 @@ function renderHome(){
     const m = e.target.closest('[data-menu]');
     if (m){
       e.stopPropagation();
-      if (m.dataset.menu === 'import') openMenu(m, [{icon:'slides', label:'Notes from slides, documents or video', run:() => IO.openImport(fid)}, {icon:'upload', label:'Restore a NoteTime backup', run:() => IO.restoreBackup(fid)}]);
+      if (m.dataset.menu === 'import') openMenu(m, [{icon:'slides', label:'Notes from slides, documents or video', run:() => IO.openImport(fid)}, {icon:'upload', label:'Restore a NoteTip backup', run:() => IO.restoreBackup(fid)}]);
       else itemMenu(m, S.items.get(m.dataset.menu));
       return;
     }
@@ -627,14 +627,14 @@ function renderNotebook(){
   <header class="topbar">
     ${sbToggleBtn()}
     <div class="crumbs"><a href="#">Home</a>${path.map(p => `<span class="sep">/</span><a href="#folder-${p.id}">${esc(p.name)}</a>`).join('')}<span class="sep">/</span></div>
-    <div class="nb-brand"><a href="#" class="nb-brand-link" title="Go to Home"><img src="${LOGO}" alt=""><span>NoteTime</span></a></div>
+    <div class="nb-brand"><a href="#" class="nb-brand-link" title="Go to Home"><img src="${LOGO}" alt=""><span>NoteTip</span></a></div>
     <div class="tb-title grow"><input class="title-input" id="nb-title" value="${esc(nb.name)}" aria-label="Notebook name" maxlength="80"></div>
     <nav class="tabs" role="tablist">${tabs.map(([k, l, i]) => `<button class="tab ${S.tab === k ? 'on' : ''}" role="tab" aria-selected="${S.tab === k}" data-tab="${k}">${ic(i)}${l}</button>`).join('')}</nav>
     <span class="savestate" id="savestate"></span>
     <div class="peers" id="peers" hidden></div>
     <button class="btn share-btn ${nb.shared ? 'is-shared' : ''}" id="share-open" title="Share and work together">${ic('people')}<span>${nb.shared ? 'Shared' : 'Share'}</span></button>
     <button class="iconbtn ${isView(nb) ? 'on' : ''}" id="view-btn" aria-label="${isView(nb) ? 'Leave view mode' : 'View mode'}" title="${forcedView(nb) ? 'You can only view this shared notebook' : 'View mode: read without editing'}" aria-pressed="${isView(nb)}">${I.eye}</button>
-    <button class="iconbtn ${S.aiOpen ? 'on' : ''}" id="ai-btn" aria-label="Ask NoteTime AI" title="Ask NoteTime AI">${I.spark}</button>
+    <button class="iconbtn ${S.aiOpen ? 'on' : ''}" id="ai-btn" aria-label="Ask NoteTip AI" title="Ask NoteTip AI">${I.spark}</button>
     <button class="iconbtn" id="share-btn" aria-label="More: version history, export, print" title="Version history, export, print" data-menu="share">${I.more}</button>
     <button class="iconbtn" id="set-btn" aria-label="Notebook settings" title="Notebook settings">${I.gear}</button>
   </header>
@@ -646,7 +646,7 @@ function renderNotebook(){
   $('#ai-btn').onclick = () => toggleAI();
   $('#set-btn').onclick = openSettings;
   $('#share-open').onclick = () => shareDialog(nb);
-  $('#view-btn').onclick = () => { if (forcedView(nb)){ toast('You can only view this shared notebook. Ask the owner of NoteTime for edit access.'); return } S.viewMode = !S.viewMode; renderNotebook() };
+  $('#view-btn').onclick = () => { if (forcedView(nb)){ toast('You can only view this shared notebook. Ask the owner of NoteTip for edit access.'); return } S.viewMode = !S.viewMode; renderNotebook() };
   t.readOnly = forcedView(nb);
   Share.renderPeers();
   Versions.opened(nb);
@@ -856,11 +856,11 @@ function openSettings(){
   const tog = (key, title, sub, val = s[key], scope = 'nb') => `<div class="toggle"><div class="t"><b>${title}</b><span>${sub}</span></div><button class="switch ${val ? 'on' : ''}" data-tog="${key}" data-scope="${scope}" role="switch" aria-checked="${!!val}" aria-label="${title}"></button></div>`;
   sh.innerHTML = `<div class="sheet-head"><h3>Notebook settings</h3><button class="iconbtn" id="sh-x" aria-label="Close settings">${I.close}</button></div>
   <div class="sheet-body">
-    ${window.NT_STANDALONE ? `<div class="field"><span class="lbl">NoteTime AI</span>
+    ${window.NT_STANDALONE ? `<div class="field"><span class="lbl">NoteTip AI</span>
       <p class="note" style="margin:0">${ONLINE_NOTE}</p>
       ${onlineBtn()}
       <details class="own-key"><summary>Use an Anthropic API key instead</summary>
-      <p class="note" style="margin:0">Paste a key from console.anthropic.com to use NoteTime AI right here. It stays on this device, and each use is billed to that API account.</p>
+      <p class="note" style="margin:0">Paste a key from console.anthropic.com to use NoteTip AI right here. It stays on this device, and each use is billed to that API account.</p>
       <div class="linkrow"><input class="input" id="ai-key" type="password" autocomplete="off" placeholder="${NTAI.hasKey() ? 'Key saved. Paste a new one to replace it' : 'Paste your AI key'}"><button class="btn primary" id="ai-key-save">Save</button></div>
       ${NTAI.hasKey() ? '<button class="btn ghost danger" id="ai-key-del" style="align-self:flex-start">Remove key</button>' : ''}
       <span class="note" id="ai-key-msg"></span></details></div>` : ''}
@@ -892,7 +892,7 @@ function openSettings(){
     const v = $('#ai-key', sh).value.trim(); const msg = $('#ai-key-msg', sh);
     if (!v){ msg.textContent = 'Paste a key first.'; return }
     NTAI.setKey(v); aks.disabled = true; msg.textContent = 'Checking the key…';
-    try { await NTAI.test(); S.sample = NTAI.sample; msg.textContent = 'Key saved. NoteTime AI is on.'; $('#ai-key', sh).value = ''; if (S.aiOpen) renderAI() }
+    try { await NTAI.test(); S.sample = NTAI.sample; msg.textContent = 'Key saved. NoteTip AI is on.'; $('#ai-key', sh).value = ''; if (S.aiOpen) renderAI() }
     catch (e){ NTAI.setKey(''); S.sample = null; msg.textContent = aiErr(e) }
     aks.disabled = false;
   };
@@ -942,18 +942,18 @@ function shareDialog(nb){
   const own = Share.isOwner(nb);
   let body;
   if (!ok){
-    body = window.NT_STANDALONE ? `<p class="muted" style="margin:0">Live sharing works in the online version of NoteTime. In this app, export the notebook as a NoteTime backup (⋯ menu → Export → Backup) and send the file. The other person restores it from Home → Import.</p>` : `<p class="muted" style="margin:0">Sharing needs NoteTime opened from your account while you're signed in, so notebooks can sync. Right now your notebooks are saved in this browser only.</p>`;
+    body = window.NT_STANDALONE ? `<p class="muted" style="margin:0">Live sharing works in the online version of NoteTip. In this app, export the notebook as a NoteTip backup (⋯ menu → Export → Backup) and send the file. The other person restores it from Home → Import.</p>` : `<p class="muted" style="margin:0">Sharing needs NoteTip opened from your account while you're signed in, so notebooks can sync. Right now your notebooks are saved in this browser only.</p>`;
   } else if (!nb.shared){
     body = `<p class="muted" style="margin:0">Work on <b>${esc(nb.name)}</b> with other people at the same time. Everyone sees new typing, handwriting and voice notes within a second or two.</p>
       <ol class="share-steps">
-        <li><b>Invite people to NoteTime.</b> Use the <b>Share</b> button in the bar at the very top of the page, above NoteTime, and give them access that lets them edit. People with view-only access can read shared notebooks but not write in them.</li>
+        <li><b>Invite people to NoteTip.</b> Use the <b>Share</b> button in the bar at the very top of the page, above NoteTip, and give them access that lets them edit. People with view-only access can read shared notebooks but not write in them.</li>
         <li><b>Share this notebook.</b> It moves to Shared notebooks, where everyone you've invited can open it. Your other notebooks stay private.</li>
       </ol>`;
   } else {
-    body = `<div class="share-status">${ic('people')}<div><b>Shared</b><span class="note">Everyone you've shared NoteTime with can open and edit this notebook.${own ? '' : ' Someone else shared it.'}</span></div></div>
+    body = `<div class="share-status">${ic('people')}<div><b>Shared</b><span class="note">Everyone you've shared NoteTip with can open and edit this notebook.${own ? '' : ' Someone else shared it.'}</span></div></div>
       <div class="field"><span class="lbl">Here now</span><div id="share-here">${Share.herePeopleHtml()}</div></div>
       <div class="field"><span class="lbl">Link to this notebook</span><div class="linkrow"><input class="input" id="share-link" readonly value="${esc(Share.linkFor(nb))}"><button class="btn" id="share-copy">${ic('link')}Copy</button></div>
-      <span class="note">Only people you've invited to NoteTime can open it.</span></div>`;
+      <span class="note">Only people you've invited to NoteTip can open it.</span></div>`;
   }
   const actions = !ok ? [{label:'Close', kind:'primary'}]
     : !nb.shared ? [{label:'Cancel'}, {label:'Share this notebook', kind:'primary', icon:'people', run:() => {
@@ -974,14 +974,14 @@ function aiErr(e){
   if (c === 'not_granted') return 'AI is turned off for this page. You can allow it from the page permissions menu.';
   if (c === 'rate_limited') return 'Too many AI requests at once. Wait a moment, then try again.';
   if (c === 'cancelled') return 'Stopped.';
-  if (c === 'invalid_json') return "NoteTime AI's reply came back in the wrong shape. Try again.";
+  if (c === 'invalid_json') return "NoteTip AI's reply came back in the wrong shape. Try again.";
   if (c === 'prompt_too_large') return 'This is too long to send at once. Try a shorter file or notebook.';
-  if (c === 'images_unavailable') return "Images can't be sent to NoteTime AI in this view.";
-  if (c === 'no_key') return 'NoteTime AI runs with your Claude account in the online version. Open it from notebook Settings → NoteTime AI.';
+  if (c === 'images_unavailable') return "Images can't be sent to NoteTip AI in this view.";
+  if (c === 'no_key') return 'NoteTip AI runs with your Claude account in the online version. Open it from notebook Settings → NoteTip AI.';
   if (c === 'bad_key') return 'Your AI key was rejected. Check it in notebook Settings.';
-  if (c === 'refused') return 'NoteTime AI declined that request.';
-  if (c === 'invalid_request') return (e.message || 'NoteTime AI could not handle that request.');
-  return "Couldn't reach NoteTime AI. Check your connection and try again.";
+  if (c === 'refused') return 'NoteTip AI declined that request.';
+  if (c === 'invalid_request') return (e.message || 'NoteTip AI could not handle that request.');
+  return "Couldn't reach NoteTip AI. Check your connection and try again.";
 }
 function nbText(nb, max = 14000){
   let s = nb.pages.map((p, i) => {
@@ -1027,17 +1027,17 @@ function renderAI(){
   const p = $('#ai-panel'); const nb = curNb(); if (!p || !nb) return;
   const busy = !!chatCtl;
   const msgs = nb.chat || [];
-  p.innerHTML = `<div class="ai-head"><h3>${ic('spark')}NoteTime AI</h3>
+  p.innerHTML = `<div class="ai-head"><h3>${ic('spark')}NoteTip AI</h3>
       ${msgs.length ? `<button class="btn ghost" id="ai-clear" style="padding:5px 8px;font-size:12px">Clear</button>` : ''}
-      <button class="iconbtn" id="ai-x" aria-label="Close NoteTime AI">${I.close}</button></div>
+      <button class="iconbtn" id="ai-x" aria-label="Close NoteTip AI">${I.close}</button></div>
     <div class="ai-msgs" id="ai-msgs" aria-live="polite">
-      ${!S.sample ? `<div class="ai-intro">${window.NT_STANDALONE ? ONLINE_NOTE + '</div><div style="padding:4px 2px">' + onlineBtn() : 'NoteTime AI isn\'t available here. Sign in to your account to ask questions, convert handwriting, get overviews, make notes from slides and video, and generate quizzes. Math checking still works without it.'}</div>` :
-        !msgs.length ? `<div class="ai-intro">NoteTime AI reads every page of <b>${esc(nb.name)}</b>, your voice notes and the math checker's results. Ask anything, or start with one of these.</div>` : ''}
+      ${!S.sample ? `<div class="ai-intro">${window.NT_STANDALONE ? ONLINE_NOTE + '</div><div style="padding:4px 2px">' + onlineBtn() : 'NoteTip AI isn\'t available here. Sign in to your account to ask questions, convert handwriting, get overviews, make notes from slides and video, and generate quizzes. Math checking still works without it.'}</div>` :
+        !msgs.length ? `<div class="ai-intro">NoteTip AI reads every page of <b>${esc(nb.name)}</b>, your voice notes and the math checker's results. Ask anything, or start with one of these.</div>` : ''}
       ${msgs.map((m, i) => `<div class="msg ${m.role} ${m.err ? 'err' : ''}">${m.role === 'assistant' ? mdLite(m.content) : esc(m.content)}
         ${m.role === 'assistant' && !m.err && m.content ? `<div class="mact"><button data-add="${i}">Add to page</button><button data-copy="${i}">Copy</button>${Ink.V.t ? `<button data-say="${i}">Read aloud</button>` : ''}</div>` : ''}</div>`).join('')}
     </div>
     ${S.sample ? `<div class="ai-chips">${['Summarize this page', 'Explain my math mistakes', 'Make 3 practice problems', 'What should I study next?'].map(c => `<button data-chip="${esc(c)}" ${busy ? 'disabled' : ''}>${c}</button>`).join('')}</div>
-    <form class="ai-input" id="ai-form"><textarea id="ai-q" rows="1" placeholder="Ask NoteTime AI about your notes…" aria-label="Message"></textarea>
+    <form class="ai-input" id="ai-form"><textarea id="ai-q" rows="1" placeholder="Ask NoteTip AI about your notes…" aria-label="Message"></textarea>
       ${busy ? `<button type="button" class="iconbtn on" id="ai-stop" aria-label="Stop">${I.stop}</button>` : `<button type="submit" class="iconbtn on" aria-label="Send">${I.send}</button>`}</form>` : ''}`;
   const box = $('#ai-msgs'); box.scrollTop = box.scrollHeight;
   $('#ai-x').onclick = () => toggleAI(false);
@@ -1068,7 +1068,7 @@ async function sendChat(text){
   const bubble = () => $$('#ai-msgs .msg.assistant').pop();
   bubble().innerHTML = '<div class="thinking"><span class="spin"></span>Thinking…</div>';
   const findings = mathFindings(nb);
-  const rules = `You are NoteTime AI, the study assistant built into the notes app NoteTime. If asked who or what you are, say you are NoteTime AI. The student's notebook "${nb.name}" is below. Answer using their notes when relevant; you can add general knowledge, and say so when something isn't in their notes. Be concise and friendly, like a good tutor. Format as plain text: short paragraphs, "-" bullets, **bold** for key words. No headings, no tables, no LaTeX: write math like 3^2 + 4^2 = 25, ∫₀³ x² dx = 9, d/dx (x³) = 3x².
+  const rules = `You are NoteTip AI, the study assistant built into the notes app NoteTip. If asked who or what you are, say you are NoteTip AI. The student's notebook "${nb.name}" is below. Answer using their notes when relevant; you can add general knowledge, and say so when something isn't in their notes. Be concise and friendly, like a good tutor. Format as plain text: short paragraphs, "-" bullets, **bold** for key words. No headings, no tables, no LaTeX: write math like 3^2 + 4^2 = 25, ∫₀³ x² dx = 9, d/dx (x³) = 3x².
 
 The app's math checker found ${findings.length ? 'these problems:\n' + findings.join('\n') : 'no math problems.'}
 
@@ -1116,10 +1116,10 @@ function renderOverview(){
       </div>
     </div>
     <div class="card">
-      <div class="row-between"><span class="ai-tag">${I.spark}NoteTime AI summary</span>
+      <div class="row-between"><span class="ai-tag">${I.spark}NoteTip AI summary</span>
         ${S.sample ? `<button class="btn ${ov ? '' : 'primary'}" id="ov-gen" ${busy ? 'disabled' : ''}>${ic(ov ? 'refresh' : 'spark')}${ov ? 'Refresh' : 'Create overview'}</button>` : ''}</div>
       <div id="ov-body">${busy ? '<div class="thinking"><span class="spin"></span>Reading your notebook… this can take up to a minute.</div>' : ov ? overviewHtml(ov) + `<div class="note">${stale ? '<span class="warn">Your notes changed after this overview was made. Refresh to update it.</span>' : `Made ${ago(ov.at)} from all ${nb.pages.length} page${nb.pages.length === 1 ? '' : 's'}.`}</div>` :
-        `<p class="muted" style="margin:0">${!S.sample && window.NT_STANDALONE ? ONLINE_NOTE + '</p><p style="margin:8px 0 0">' + onlineBtn() : S.sample ? 'NoteTime AI reads every page and voice note, then writes a short summary, the key points, terms to know and what to review next.' : "NoteTime AI summaries need you to be signed in. Sign in to your account to create one. Everything else on this page works without it."}</p>`}</div>
+        `<p class="muted" style="margin:0">${!S.sample && window.NT_STANDALONE ? ONLINE_NOTE + '</p><p style="margin:8px 0 0">' + onlineBtn() : S.sample ? 'NoteTip AI reads every page and voice note, then writes a short summary, the key points, terms to know and what to review next.' : "NoteTip AI summaries need you to be signed in. Sign in to your account to create one. Everything else on this page works without it."}</p>`}</div>
     </div>
     ${Object.keys(tagged).length ? `<div class="card"><h3>Color-coded notes</h3><div class="tag-groups">${Ink.TAGS.filter(t => tagged[t.k]).map(t => `<div class="tag-group"><div class="tg-head"><i class="hl hl-${t.k}">${t.label}</i><span class="note">${tagged[t.k].length}</span></div><ul>${tagged[t.k].slice(0, 12).map(x => `<li>${esc(x.text)}</li>`).join('')}</ul></div>`).join('')}</div></div>` : ''}
     ${allIssues.length ? `<div class="card"><h3>Math to fix</h3>${allIssues.map(r => `<div class="issue"><div class="k">${esc(r.title)}<span class="ln">Page ${r.page + 1}, line ${r.line + 1}</span></div><code>${esc(r.src)}</code><p>${esc(r.msg)}</p><div class="ia"><button class="btn" data-fix="${r.page}:${r.line}">Go to line</button></div></div>`).join('')}</div>` : ''}
@@ -1177,11 +1177,11 @@ function renderQuiz(){
         <div class="field"><span class="lbl">Questions</span><div class="seg" id="qz-n" style="max-width:280px">${[5, 8, 12].map(n => `<button class="${(S.qn || 5) === n ? 'on' : ''}" data-v="${n}">${n}</button>`).join('')}</div></div>
         <div class="field"><span class="lbl">Difficulty</span><div class="seg" id="qz-d" style="max-width:360px">${['Easy', 'Medium', 'Hard'].map(n => `<button class="${(S.qd || 'Medium') === n ? 'on' : ''}" data-v="${n}">${n}</button>`).join('')}</div></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap">
-          ${S.sample ? `<button class="btn primary" id="qz-ai">${ic('spark')}Generate quiz with NoteTime AI</button>` : window.NT_STANDALONE ? onlineBtn('AI quizzes with Claude') : ''}
-          <button class="btn ${S.sample ? '' : 'primary'}" id="qz-quick">Quick quiz without NoteTime AI</button>
+          ${S.sample ? `<button class="btn primary" id="qz-ai">${ic('spark')}Generate quiz with NoteTip AI</button>` : window.NT_STANDALONE ? onlineBtn('AI quizzes with Claude') : ''}
+          <button class="btn ${S.sample ? '' : 'primary'}" id="qz-quick">Quick quiz without NoteTip AI</button>
           ${nb.quiz ? `<button class="btn" id="qz-retake">${ic('refresh')}Retake last quiz</button>` : ''}
         </div>
-        <p class="note" style="margin:0">${S.sample ? 'NoteTime AI quizzes mix multiple choice, true/false and short answers from every page and voice note.' : 'Quick quizzes use lines like “Definition: Nucleus — holds the DNA” and the equations in your notes. Sign in to your account to use NoteTime AI quizzes.'}</p>
+        <p class="note" style="margin:0">${S.sample ? 'NoteTip AI quizzes mix multiple choice, true/false and short answers from every page and voice note.' : 'Quick quizzes use lines like “Definition: Nucleus — holds the DNA” and the equations in your notes. Sign in to your account to use NoteTip AI quizzes.'}</p>
       </div>
       ${hist.length ? `<div class="card"><div class="row-between"><h3>Your scores</h3><span class="note">Best ${best}% · ${hist.length} attempt${hist.length === 1 ? '' : 's'}</span></div>
         <div class="history" aria-label="Score history">${hist.slice(-20).map(h => `<i style="height:${Math.max(6, Math.round(48 * h.score / h.total))}px" title="${h.score}/${h.total} · ${new Date(h.at).toLocaleDateString()}"></i>`).join('')}</div></div>` : ''}

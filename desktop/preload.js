@@ -1,4 +1,4 @@
-// Gives the NoteTime page a small, safe set of desktop actions (version and updates).
+// Gives the NoteTip page a small, safe set of desktop actions (version and updates).
 const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('NTDesktop', {

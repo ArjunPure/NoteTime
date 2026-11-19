@@ -1,5 +1,5 @@
 "use strict";
-/* NoteTime math engine: arithmetic checking, linear solving, and calculus (integrals, derivatives, limits, sums). */
+/* NoteTip math engine: arithmetic checking, linear solving, and calculus (integrals, derivatives, limits, sums). */
 const MathEngine = (() => {
   let RAD = false;
   const ang = f => x => f(RAD ? x : x * Math.PI / 180);

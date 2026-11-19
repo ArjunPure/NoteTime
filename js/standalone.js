@@ -1,6 +1,6 @@
 "use strict";
-/* NoteTime standalone mode: when NoteTime runs as an installed app (not inside the hosted viewer),
-   this supplies on-device storage, file saving, read-aloud, voice typing and NoteTime AI (with your own key). */
+/* NoteTip standalone mode: when NoteTip runs as an installed app (not inside the hosted viewer),
+   this supplies on-device storage, file saving, read-aloud, voice typing and NoteTip AI (with your own key). */
 (() => {
   if (window.claude && window.claude.use) return; // running inside the hosted viewer: it provides everything
   window.NT_STANDALONE = true;
@@ -112,13 +112,13 @@
     };
   })() : null;
 
-  /* ---------- NoteTime AI with the user's own key ---------- */
+  /* ---------- NoteTip AI with the user's own key ---------- */
   const KEY = 'notetime.aikey';
   const SDK_URL = 'https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.5.0/+esm';
   let clientP = null, clientKey = null;
   const getKey = () => { try { return ls && ls.getItem(KEY) || '' } catch { return '' } };
   async function client(){
-    const k = getKey(); if (!k) throw {code:'no_key', message:'NoteTime AI runs with your Claude account in the online version.'};
+    const k = getKey(); if (!k) throw {code:'no_key', message:'NoteTip AI runs with your Claude account in the online version.'};
     if (!clientP || clientKey !== k){
       clientKey = k;
       clientP = import(SDK_URL).then(m => new m.default({apiKey:k, dangerouslyAllowBrowser:true}));
@@ -147,7 +147,7 @@
     if (e && e.status === 429) return {code:'rate_limited', message:'Too many requests. Wait a moment.'};
     if (e && e.status === 400 && /prompt is too long|too large/i.test(e.message || '')) return {code:'prompt_too_large', message:'Too long.'};
     if (e && e.status === 400) return {code:'invalid_request', message:(e.message || 'The request was rejected.')};
-    return {code:'unavailable', message:(e && e.message) || "Couldn't reach NoteTime AI."};
+    return {code:'unavailable', message:(e && e.message) || "Couldn't reach NoteTip AI."};
   }
   async function sample(input, opts = {}){
     let text = '';
@@ -164,7 +164,7 @@
       }, {signal:opts.signal});
       stream.on('text', (delta, snapshot) => { text = snapshot; if (opts.onText) opts.onText({text:snapshot, delta}) });
       const msg = await stream.finalMessage();
-      if (msg.stop_reason === 'refusal') throw {code:'refused', message:'NoteTime AI declined that request.'};
+      if (msg.stop_reason === 'refusal') throw {code:'refused', message:'NoteTip AI declined that request.'};
       text = msg.content.filter(b => b.type === 'text').map(b => b.text).join('');
       return {text, truncated: msg.stop_reason === 'max_tokens'};
     } catch (e){ const m = mapErr(e); if (text) m.text = text; throw m }

@@ -1,5 +1,5 @@
 "use strict";
-/* NoteTime extras: fonts, error reporting, unified undo/redo, version history, zoom, touch gestures, video transcripts. */
+/* NoteTip extras: fonts, error reporting, unified undo/redo, version history, zoom, touch gestures, video transcripts. */
 
 /* ---------- fonts ---------- */
 const FONTS = [
@@ -195,7 +195,7 @@ async function openVersions(nb){
   const canSave = !(nb.shared && Share.readOnly());
   sh.innerHTML = `<div class="sheet-head"><h3>Version history</h3><button class="iconbtn" id="vh-x" aria-label="Close version history">${I.close}</button></div>
     <div class="sheet-body">
-      <p class="muted" style="margin:0">NoteTime saves a version when you open a notebook and every few minutes while you work. Restoring a version keeps your current notes as a version too.</p>
+      <p class="muted" style="margin:0">NoteTip saves a version when you open a notebook and every few minutes while you work. Restoring a version keeps your current notes as a version too.</p>
       ${canSave ? `<div class="linkrow"><input class="input" id="vh-name" placeholder="Name this version, e.g. Before the exam" maxlength="60"><button class="btn primary" id="vh-save">Save version</button></div>` : ''}
       <div id="vh-list"><div class="thinking"><span class="spin"></span>Loading versions…</div></div>
     </div>`;

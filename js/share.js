@@ -1,5 +1,5 @@
 "use strict";
-/* NoteTime sharing: shared notebooks in the artifact's shared store, live sync, merge, and presence. */
+/* NoteTip sharing: shared notebooks in the artifact's shared store, live sync, merge, and presence. */
 const Share = (() => {
   const LINK = 'https://claude.ai/artifact/SGYi3DxfG5tmDZ2u5G5UTs';
   const META_KEYS = ['id','type','name','cover','settings','createdAt','updatedAt','overview','quiz','quizHistory','source','owner','sharedAt'];
@@ -32,7 +32,7 @@ const Share = (() => {
     inflight.set(path, p); updateSaveState();
     p.then(() => { S.saveErr = false }).catch(e => {
       console.warn(e);
-      if (e && e.code === 'not_granted'){ canWrite = false; toast('You can read shared notebooks but not edit them. Ask the owner of NoteTime for edit access.') }
+      if (e && e.code === 'not_granted'){ canWrite = false; toast('You can read shared notebooks but not edit them. Ask the owner of NoteTip for edit access.') }
       else if (e && e.code === 'invalid_argument') toast('This page is too big to share. Split it onto a new page.');
       else { S.saveErr = true; toast("Couldn't save to the shared notebook. Check your connection.") }
     }).finally(() => {

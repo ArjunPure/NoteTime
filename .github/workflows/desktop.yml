@@ -58,13 +58,13 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.v.outputs.version }}
-          name: NoteTime v${{ steps.v.outputs.version }}
+          name: NoteTip v${{ steps.v.outputs.version }}
           make_latest: true
           body: |
-            **Windows:** `NoteTime-Setup-${{ steps.v.outputs.version }}.exe` installs NoteTime and updates itself from then on. `NoteTime-Portable-${{ steps.v.outputs.version }}.exe` runs without installing. If Windows shows "Windows protected your PC", click **More info → Run anyway**.
-            **Mac:** the `.dmg` is added here a little later. Open it and drag NoteTime to Applications. The first time, right-click NoteTime and choose **Open**.
+            **Windows:** `NoteTip-Setup-${{ steps.v.outputs.version }}.exe` installs NoteTip and updates itself from then on. `NoteTip-Portable-${{ steps.v.outputs.version }}.exe` runs without installing. If Windows shows "Windows protected your PC", click **More info → Run anyway**.
+            **Mac:** the `.dmg` is added here a little later. Open it and drag NoteTip to Applications. The first time, right-click NoteTip and choose **Open**.
             **Linux:** make the `.AppImage` executable and run it.
-            **iPhone / iPad:** open https://arjunpure.github.io/NoteTime/ in Safari, tap Share, then **Add to Home Screen**.
+            **iPhone / iPad:** open https://arjunpure.github.io/NoteTip/ in Safari, tap Share, then **Add to Home Screen**.
           files: downloads/*
 
   mac:

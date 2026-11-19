@@ -1,4 +1,4 @@
-# NoteTime
+# NoteTip
 
 A notebook app for iPad, iPhone and laptops: type or write with a stylus, check math as you go, record voice notes, and turn slides, documents and videos into color-coded study notes.
 
@@ -12,36 +12,36 @@ A notebook app for iPad, iPhone and laptops: type or write with a stylus, check 
 - **Version history** with preview and restore.
 - **Voice notes** pinned to the page, plus read-aloud.
 - **11 fonts**, lined, college ruled, graph, dotted or blank paper, and light or dark mode.
-- **Export** to PDF, PNG, Markdown, text or a NoteTime backup, plus print-ready PDFs.
-- **NoteTime AI** (optional): chat about a notebook, overviews, quizzes, handwriting to text, and notes from PowerPoint, PDF, Word, photos and video.
+- **Export** to PDF, PNG, Markdown, text or a NoteTip backup, plus print-ready PDFs.
+- **NoteTip AI** (optional): chat about a notebook, overviews, quizzes, handwriting to text, and notes from PowerPoint, PDF, Word, photos and video.
 
-## Get NoteTime
+## Get NoteTip
 
-**Use it online or on iPhone and iPad:** https://arjunpure.github.io/NoteTime/
+**Use it online or on iPhone and iPad:** https://arjunpure.github.io/NoteTip/
 
-**Download for PC:** https://github.com/ArjunPure/NoteTime/releases/latest
+**Download for PC:** https://github.com/ArjunPure/NoteTip/releases/latest
 
 | Device | How to install |
 |---|---|
-| Windows | Download `NoteTime-Setup-x.y.z.exe` and run it. `NoteTime-Portable-x.y.z.exe` runs without installing. |
-| Mac | Download `NoteTime-x.y.z-mac.dmg`, open it, and drag NoteTime to Applications. |
-| Linux | Download `NoteTime-x.y.z-linux.AppImage`, mark it executable, and run it. |
+| Windows | Download `NoteTip-Setup-x.y.z.exe` and run it. `NoteTip-Portable-x.y.z.exe` runs without installing. |
+| Mac | Download `NoteTip-x.y.z-mac.dmg`, open it, and drag NoteTip to Applications. |
+| Linux | Download `NoteTip-x.y.z-linux.AppImage`, mark it executable, and run it. |
 | iPhone / iPad | Open the website above in Safari, tap the Share button, then **Add to Home Screen**. It opens full screen with its own icon and works offline. |
-| Chromebook | Open the website in Chrome and choose **Install NoteTime** from the address bar or menu. |
+| Chromebook | Open the website in Chrome and choose **Install NoteTip** from the address bar or menu. |
 
 The desktop downloads aren't signed with a paid certificate yet. Windows may show "Windows protected your PC": click **More info → Run anyway**. On Mac, right-click the app and choose **Open** the first time.
 
-## NoteTime AI (Claude)
+## NoteTip AI (Claude)
 
-NoteTime AI runs on Claude. The full version of NoteTime lives on claude.ai, where it uses your Claude account: sign in to Claude and the AI works with no key, your notebooks sync across your devices, and live sharing works.
+NoteTip AI runs on Claude. The full version of NoteTip lives on claude.ai, where it uses your Claude account: sign in to Claude and the AI works with no key, your notebooks sync across your devices, and live sharing works.
 
 **Online version (AI, sync, sharing):** https://claude.ai/artifact/SGYi3DxfG5tmDZ2u5G5UTs. It's private to the owner unless shared from the Share button on that page.
 
-The downloaded PC app and the iPhone/iPad website work offline, without an account, and keep notebooks on the device. Their AI buttons open the online version. To move a notebook, export it (**⋯ → Export → Backup**) and restore it in the online version (**Home → Import → Restore a NoteTime backup**). People with an Anthropic API key can paste it in notebook Settings to use the AI directly in the downloaded app instead.
+The downloaded PC app and the iPhone/iPad website work offline, without an account, and keep notebooks on the device. Their AI buttons open the online version. To move a notebook, export it (**⋯ → Export → Backup**) and restore it in the online version (**Home → Import → Restore a NoteTip backup**). People with an Anthropic API key can paste it in notebook Settings to use the AI directly in the downloaded app instead.
 
 ## Updates
 
-NoteTime tells you when a new version is out: a banner drops down at the top of the screen with **Update now**.
+NoteTip tells you when a new version is out: a banner drops down at the top of the screen with **Update now**.
 
 - **Windows (installed) and Linux:** the update downloads inside the app, then **Restart now** finishes it. Your notebooks are kept.
 - **Mac and the portable Windows app:** **Update now** opens the download page. Install the new version over the old one.
@@ -77,7 +77,7 @@ To publish an update: raise `version` in `package.json`, list the changes in `re
 
 ## Notes on the installed app
 
-- Notebooks are saved on each device, so they don't sync between devices. Use **⋯ → Export → Backup** on one device and **Home → Import → Restore a NoteTime backup** on another to move them.
+- Notebooks are saved on each device, so they don't sync between devices. Use **⋯ → Export → Backup** on one device and **Home → Import → Restore a NoteTip backup** on another to move them.
 - Live sharing with other people is only available in the hosted version.
 - Voice typing uses the browser's speech recognition, which works in Safari and Chrome.
 

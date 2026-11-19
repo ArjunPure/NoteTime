@@ -1,9 +1,13 @@
-// NoteTime desktop app: opens the NoteTime web app in its own window and handles updates.
+// NoteTip desktop app: opens the NoteTip web app in its own window and handles updates.
 const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const { autoUpdater } = require('electron-updater');
 const path = require('path');
 
-const RELEASES = 'https://github.com/ArjunPure/NoteTime/releases/latest';
+// Notebooks live in the app's data folder. The app was first released as NoteTime,
+// so keep using that folder after the rename to NoteTip.
+app.setPath('userData', path.join(app.getPath('appData'), 'NoteTime'));
+
+const RELEASES = 'https://github.com/ArjunPure/NoteTip/releases/latest';
 let win = null;
 
 // Installed Windows and Linux builds can update themselves. Mac builds aren't signed,
@@ -47,7 +51,7 @@ function createWindow(){
     height: 900,
     minWidth: 420,
     minHeight: 520,
-    title: 'NoteTime',
+    title: 'NoteTip',
     icon: path.join(__dirname, '..', 'img', 'icon-512.png'),
     backgroundColor: '#E9ECF2',
     autoHideMenuBar: true,

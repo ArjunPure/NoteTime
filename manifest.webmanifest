@@ -1,6 +1,6 @@
 {
-  "name": "NoteTime",
-  "short_name": "NoteTime",
+  "name": "NoteTip",
+  "short_name": "NoteTip",
   "description": "Notebooks with stylus drawing, math checking, voice notes and study tools.",
   "id": "./",
   "start_url": "./",

@@ -1,5 +1,5 @@
 "use strict";
-/* NoteTime ink: pens, highlighter, eraser, lasso, voice notes, handwriting conversion, dockable toolbar. */
+/* NoteTip ink: pens, highlighter, eraser, lasso, voice notes, handwriting conversion, dockable toolbar. */
 const Ink = (() => {
   const W0 = 840;
   const TI = {
@@ -195,7 +195,7 @@ const Ink = (() => {
   function openMath(anchor){
     pop(anchor, `<div class="tp-title">Insert math</div>
       <div class="sym-grid">${SYMBOLS.map(([l, ins, title], i) => `<button class="sym" data-sym="${i}" title="${title}">${l}</button>`).join('')}</div>
-      <div class="tp-note">Or type words like “integral of x^2 from 0 to 3 =” and NoteTime writes the symbols.</div>
+      <div class="tp-note">Or type words like “integral of x^2 from 0 to 3 =” and NoteTip writes the symbols.</div>
       <div class="tp-title">Color this line</div>
       <div class="tag-grid">${TAGS.map(tg => `<button class="tagbtn hl-${tg.k}" data-tag="${tg.k}">${tg.label}</button>`).join('')}</div>`, p => {
       $$('button', p).forEach(b => b.onmousedown = e => e.preventDefault());
@@ -589,7 +589,7 @@ const Ink = (() => {
   /* ---------- handwriting conversion ---------- */
   async function convert(onlySel){
     if (!M) return;
-    if (!S.sample){ toast(window.NT_STANDALONE ? 'Converting handwriting uses Claude AI in the online version. Open it from notebook Settings → NoteTime AI.' : 'Converting handwriting needs NoteTime AI. Sign in to your account to use it.'); return }
+    if (!S.sample){ toast(window.NT_STANDALONE ? 'Converting handwriting uses Claude AI in the online version. Open it from notebook Settings → NoteTip AI.' : 'Converting handwriting needs NoteTip AI. Sign in to your account to use it.'); return }
     const list = (onlySel && sel ? [...sel.set] : M.strokes).filter(s => s.t !== 'highlighter');
     if (!list.length){ toast(onlySel ? 'Select some handwriting first.' : 'There is no handwriting on this page yet. Write with a pen first.'); return }
     const lim = await S.sample.limits().catch(() => null);
