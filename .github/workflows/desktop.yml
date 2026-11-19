@@ -1,8 +1,10 @@
 name: Build desktop app
 
 # Builds Windows, Mac and Linux downloads and publishes them as a GitHub release
-# named after the version in package.json. Runs when the `release` branch is pushed,
-# when a version tag is pushed, or by hand from the Actions tab.
+# named after the version in package.json. Windows and Linux are published as soon
+# as they're built; the Mac download is added to the same release when it's ready,
+# so a slow Mac machine never holds up the PC downloads.
+# Runs when the `release` branch is pushed, when a version tag is pushed, or by hand.
 on:
   push:
     branches: ['release']
@@ -12,12 +14,16 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: desktop-release
+  cancel-in-progress: true
+
 jobs:
   build:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest, ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -26,15 +32,12 @@ jobs:
           node-version: 20
       - run: npm install
       - run: npx electron-builder --publish never
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: false
       - uses: actions/upload-artifact@v4
         with:
           name: notetime-${{ matrix.os }}
           if-no-files-found: error
           path: |
             dist/*.exe
-            dist/*.dmg
             dist/*.AppImage
             dist/*.blockmap
             dist/latest*.yml
@@ -42,6 +45,8 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
     steps:
       - uses: actions/checkout@v4
       - id: v
@@ -56,8 +61,28 @@ jobs:
           name: NoteTime v${{ steps.v.outputs.version }}
           make_latest: true
           body: |
-            **Windows:** `NoteTime-Setup-${{ steps.v.outputs.version }}.exe` installs NoteTime. `NoteTime-Portable-${{ steps.v.outputs.version }}.exe` runs without installing. If Windows shows "Windows protected your PC", click **More info → Run anyway**.
-            **Mac:** open the `.dmg` and drag NoteTime to Applications. The first time, right-click NoteTime and choose **Open**.
+            **Windows:** `NoteTime-Setup-${{ steps.v.outputs.version }}.exe` installs NoteTime and updates itself from then on. `NoteTime-Portable-${{ steps.v.outputs.version }}.exe` runs without installing. If Windows shows "Windows protected your PC", click **More info → Run anyway**.
+            **Mac:** the `.dmg` is added here a little later. Open it and drag NoteTime to Applications. The first time, right-click NoteTime and choose **Open**.
             **Linux:** make the `.AppImage` executable and run it.
             **iPhone / iPad:** open https://arjunpure.github.io/NoteTime/ in Safari, tap Share, then **Add to Home Screen**.
           files: downloads/*
+
+  mac:
+    needs: release
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npx electron-builder --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.release.outputs.version }}
+          files: |
+            dist/*.dmg
+            dist/*.blockmap
+            dist/latest*.yml
