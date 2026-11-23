@@ -622,6 +622,25 @@ button.tl:hover{background:var(--surface-2)}
 .upd-bar{height:6px;border-radius:99px;background:rgba(255,255,255,.3);overflow:hidden;margin-top:6px}
 .upd-bar i{display:block;height:100%;width:0;background:#fff;transition:width .2s}
 @media (prefers-reduced-motion:reduce){.upd{transition:none}}
+
+/* ---- handwriting reading and fixes ---- */
+.inkann{position:absolute;inset:0;pointer-events:none;z-index:5}
+.inkann > *{position:absolute;transform:translateY(-50%);white-space:nowrap}
+.ia-ans{font-family:"Caveat","Kalam",cursive;font-size:calc(var(--lh,34px) * .78);color:var(--p-acc);opacity:.85}
+.ia-ans.small{font-size:calc(var(--lh,34px) * .55)}
+.ia-ok{color:var(--p-ok);font-weight:700;font-size:18px}
+.ia-reading{font:600 11px var(--f-ui);color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:2px 8px;animation:pulse2 1.2s ease-in-out infinite}
+.ia-draw{transform:none!important;font:500 11.5px var(--f-ui);color:var(--muted);background:color-mix(in srgb,var(--surface) 85%,transparent);border:1px dashed var(--line);border-radius:6px;padding:1px 7px}
+.ia-bad{display:inline-flex;align-items:center;gap:6px;font:600 12.5px var(--f-ui);color:var(--p-red);background:var(--surface);border:1.5px solid var(--p-red);border-radius:99px;padding:2px 3px 2px 4px;box-shadow:0 2px 8px rgba(0,0,0,.12);pointer-events:auto}
+.ia-bad b{width:18px;height:18px;border-radius:50%;background:var(--p-red);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+.ia-fix{border:0;background:var(--p-red);color:#fff;border-radius:99px;padding:3px 10px;font:600 12px var(--f-ui);cursor:pointer}
+.ia-fix:hover{filter:brightness(1.1)}
+.mp-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.mp-head .btn{padding:5px 10px;font-size:12.5px}
+.fixprev{display:flex;align-items:center;gap:6px;color:var(--green);font-size:12.5px}
+.fixprev .ic svg{width:14px;height:14px}
+.fixprev code{background:var(--green-soft)!important;color:var(--fg)}
+.issue .ia .btn.primary{padding:4px 10px;font-size:12px}
 </style>
 </head>
 <body>

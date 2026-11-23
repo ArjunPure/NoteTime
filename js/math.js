@@ -520,7 +520,10 @@ const MathEngine = (() => {
       if (c === '=' && depth === 0 && !/\bat\s+[a-z]\s*$/i.test(cur)){ out.push(cur); cur = '' }
       else cur += c;
     }
-    out.push(cur); return out;
+    out.push(cur);
+    // an unclosed bracket swallowed every "=": split on them anyway so the real mistake gets reported
+    if (depth > 0 && out.length === 1 && s.includes('=')) return s.split('=');
+    return out;
   }
 
   function analyzeCalc(s, i, src){
@@ -534,14 +537,14 @@ const MathEngine = (() => {
     try { vals = segs.map(valOf) } catch (e){ if (e instanceof NotMath) return null; if (e instanceof MErr) return form(e.message); return null }
     for (let k = 1; k < vals.length; k++){
       const r = compareVals(vals[k-1], vals[k], segs[k]);
-      if (r === 'noC') return form('Add “+ C” at the end. An indefinite integral always needs a constant.');
+      if (r === 'noC') return Object.assign(form('Add “+ C” at the end. An indefinite integral always needs a constant.'), {seg:k, appendC:true});
       if (r === 'wrong'){
         const a = vals[k-1];
         let msg;
         if (a.t === 'anti') msg = `The derivative of ${segs[k]} isn't ${P(a.ast)}, so it isn't this integral.${a.F ? ` It should be ${P(a.F)} + C.` : ''}`;
         else if (a.t === 'fx') msg = `The derivative is ${P(a.ast)}, not ${segs[k]}.`;
         else msg = `${segs[k-1]} equals ${fmtNice(a.v)}, not ${segs[k]}.`;
-        return {kind:'bad', title:'The answer is incorrect', msg, src, line:i, correct:valText(a)};
+        return {kind:'bad', title:'The answer is incorrect', msg, src, line:i, correct:valText(a), seg:k, fixVal:valText(a)};
       }
     }
     const last = vals[vals.length - 1];
@@ -621,7 +624,7 @@ const MathEngine = (() => {
             if (Number.isNaN(v)) return form("This isn't defined, like the log of a negative number");
             if (prev !== null && !close(prev, v, segs[k])){
               const left = isCont && prevSeg === null ? 'The line above' : disp(prevSeg);
-              res[i] = {kind:'bad', title:'The answer is incorrect', msg:`${left} equals ${fmt(prev)}, not ${disp(segs[k])}.`, src, line:i, correct:fmt(prev)};
+              res[i] = {kind:'bad', title:'The answer is incorrect', msg:`${left} equals ${fmt(prev)}, not ${disp(segs[k])}.`, src, line:i, correct:fmt(prev), seg:k, fixVal:fmt(prev)};
               lastVal = null; return;
             }
             prev = v; prevSeg = segs[k];
@@ -648,7 +651,7 @@ const MathEngine = (() => {
         if (!close(chain.x, sol.x)){
           res[i] = {kind:'bad', title:'The answer is incorrect', msg: simple
             ? `Line ${chain.line+1} gives ${v} = ${fmt(chain.x)}, so ${v} = ${disp(segs[simpleL ? 1 : 0])} doesn't follow. Check it by putting it back in.`
-            : `This step gives ${v} = ${fmt(sol.x)}, but line ${chain.line+1} gives ${v} = ${fmt(chain.x)}. Something changed between the steps.`, src, line:i, correct:`${v} = ${fmt(chain.x)}`};
+            : `This step gives ${v} = ${fmt(sol.x)}, but line ${chain.line+1} gives ${v} = ${fmt(chain.x)}. Something changed between the steps.`, src, line:i, correct:`${v} = ${fmt(chain.x)}`, ...(simple ? {seg: simpleL ? 1 : 0, fixVal: fmt(chain.x)} : {})};
           return;
         }
         res[i] = {kind:'ok', line:i};
@@ -698,6 +701,54 @@ const MathEngine = (() => {
   }
   const WORD_RE = /\b(integral|antiderivative|derivative|limit of|sum of)\b|\blim\s*[a-z]\s*->/i;
 
+
+  /* ---- fixing: turn a flagged line into a correct one ---- */
+  const OPS = '+\\-×÷*/^·−';
+  function keepSpace(orig, val){ const lead = (orig.match(/^\s*/) || [''])[0] || ' ', trail = (orig.match(/\s*$/) || [''])[0]; return lead + val + trail }
+  function parenFix(seg, extra){
+    const open = (seg.match(/\(/g) || []).length, shut = (seg.match(/\)/g) || []).length;
+    if (!extra && open > shut) return seg.replace(/\s*$/, m => ')'.repeat(open - shut) + m);
+    if (extra && shut > open){ let n = shut - open, out = seg; while (n-- > 0){ const i = out.lastIndexOf(')'); out = out.slice(0, i) + out.slice(i + 1) } return out }
+    return null;
+  }
+  function repairOnce(raw, r){
+    const {s} = stripLabel(raw); if (!s.trim()) return null;
+    const at = raw.indexOf(s); if (at < 0) return null;
+    const segs = splitTop(s);
+    const done = t => raw.slice(0, at) + t + raw.slice(at + s.length);
+    if (r.kind === 'bad'){
+      if (r.seg === undefined || r.fixVal == null || r.seg >= segs.length) return null;
+      segs[r.seg] = keepSpace(segs[r.seg], r.fixVal);
+      return done(segs.join('='));
+    }
+    if (r.kind !== 'form') return null;
+    const m = r.msg || '';
+    if (r.appendC){ const k = Math.min(r.seg, segs.length - 1); segs[k] = segs[k].replace(/\s*$/, ' + C'); return done(segs.join('=')) }
+    if (/Two operators in a row/.test(m)) return done(s.replace(new RegExp(`([${OPS}])\\s*([+×÷*/^·])`), '$1'));
+    if (/Two “=” signs/.test(m)) return done(s.replace(/=\s*=/, '='));
+    if (/Empty parentheses/.test(m)) return done(s.replace(/\(\s*\)/, ''));
+    const um = m.match(/Unrecognized symbol “(.)”/); if (um) return done(s.replace(um[1], ''));
+    for (let k = 0; k < segs.length; k++){
+      let t = null;
+      if (/Extra closing parenthesis/.test(m)) t = parenFix(segs[k], true);
+      if (t !== null && t !== segs[k]){ segs[k] = t; return done(segs.join('=')) }
+    }
+    return null;
+  }
+  // Returns the corrected version of line i, or null when it can't be fixed safely.
+  function fixFor(text, i, opts = {}){
+    const lines = text.split('\n'); const orig = lines[i]; let cur = orig;
+    for (let pass = 0; pass < 5; pass++){
+      const r = analyze(lines.join('\n'), opts)[i];
+      if (!r) return pass && cur !== orig ? null : null;
+      if (r.kind !== 'bad' && r.kind !== 'form') return cur !== orig ? cur : null;
+      const next = repairOnce(cur, r);
+      if (!next || next === cur) return null;
+      cur = next; lines[i] = cur;
+    }
+    return null;
+  }
+
   function evaluate(str){ try { const a = parseExpr(str); if (varsOf(a).size) return null; return ev(a) } catch { return null } }
-  return {analyze, fmt, fmtNice, evaluate, close, disp, normalize, convertWords, WORD_RE, toSup, toSub};
+  return {analyze, fixFor, fmt, fmtNice, evaluate, close, disp, normalize, convertWords, WORD_RE, toSup, toSub};
 })();

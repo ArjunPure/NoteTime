@@ -75,7 +75,7 @@ const Share = (() => {
     nb.pages.forEach(p => {
       if (awaiting.has(p.id)) return;
       loaded.add(p.id);
-      const path = `sh/${nb.id}/pages/${p.id}`, d = {text:p.text, voice:p.voice || [], media:p.media || []}, j = JSON.stringify(d);
+      const path = `sh/${nb.id}/pages/${p.id}`, d = {text:p.text, voice:p.voice || [], media:p.media || [], inkmeta:p.inkmeta || []}, j = JSON.stringify(d);
       if (j !== lastJ.get(path)){ lastJ.set(path, j); send(path, d) }
     });
   }
@@ -142,24 +142,24 @@ const Share = (() => {
   }
   function newPage(nb, pid){
     const p = {id:pid, text:'', voice:[]};
-    if (stash.has(pid)){ const d = stash.get(pid); stash.delete(pid); p.text = d.text || ''; p.voice = d.voice || []; p.media = d.media || []; base.set(pid, p.text); loaded.add(pid) }
+    if (stash.has(pid)){ const d = stash.get(pid); stash.delete(pid); p.text = d.text || ''; p.voice = d.voice || []; p.media = d.media || []; p.inkmeta = d.inkmeta || []; base.set(pid, p.text); loaded.add(pid) }
     else if (openId === nb.id) awaiting.add(pid);
     return p;
   }
   function onPage(nb, pid, d){
     const path = `sh/${nb.id}/pages/${pid}`;
-    const j = JSON.stringify({text:d.text || '', voice:d.voice || [], media:d.media || []});
+    const j = JSON.stringify({text:d.text || '', voice:d.voice || [], media:d.media || [], inkmeta:d.inkmeta || []});
     awaiting.delete(pid);
     const page = nb.pages.find(p => p.id === pid);
     if (!page){ stash.set(pid, d); return }
     if (wasSent(path, j)){ base.set(pid, d.text || ''); loaded.add(pid); return }
     if (!loaded.has(pid)){
-      page.text = d.text || ''; page.voice = d.voice || []; page.media = d.media || []; base.set(pid, page.text); loaded.add(pid); lastJ.set(path, j);
+      page.text = d.text || ''; page.voice = d.voice || []; page.media = d.media || []; page.inkmeta = d.inkmeta || []; base.set(pid, page.text); loaded.add(pid); lastJ.set(path, j);
       applyRemote(nb, pid); return;
     }
     const merged = merge3(base.get(pid) ?? '', page.text, d.text || '');
     base.set(pid, d.text || '');
-    page.voice = d.voice || []; page.media = d.media || [];
+    page.voice = d.voice || []; page.media = d.media || []; page.inkmeta = d.inkmeta || [];
     page.text = merged;
     lastJ.set(path, j);
     if (merged !== (d.text || '')) write(nb, 200);
@@ -258,7 +258,7 @@ const Share = (() => {
     lastPages.set(nb.id, nb.pages.map(p => p.id));
     nb.pages.forEach(p => {
       loaded.add(p.id); base.set(p.id, p.text);
-      const path = `sh/${nb.id}/pages/${p.id}`, d = {text:p.text, voice:p.voice || [], media:p.media || []};
+      const path = `sh/${nb.id}/pages/${p.id}`, d = {text:p.text, voice:p.voice || [], media:p.media || [], inkmeta:p.inkmeta || []};
       lastJ.set(path, JSON.stringify(d)); send(path, d);
       const key = nb.id + '_' + p.id, s = S.ink.get(key) || [];
       inkSynced.set(key, new Set(s.map(x => x.i)));

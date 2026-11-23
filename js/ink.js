@@ -208,9 +208,11 @@ const Ink = (() => {
       <div class="dock-pick">${['top','left','right','bottom'].map(d => `<button class="${prefs.dock === d ? 'on' : ''}" data-dock="${d}">${d[0].toUpperCase() + d.slice(1)}</button>`).join('')}</div>
       <div class="tp-note">You can also drag the dotted handle to any edge of the screen.</div>
       <label class="chk"><input type="checkbox" id="tp-stylus" ${prefs.stylusOnly ? 'checked' : ''}> Only the stylus draws (fingers scroll)</label>
+      <label class="chk"><input type="checkbox" id="tp-snap" ${prefs.snap !== false ? 'checked' : ''}> Snap shapes when I hold the pen still</label>
       <button class="tbtn danger" id="tp-clear">${TI.trash}Clear ink on this page</button>`, p => {
       $$('[data-dock]', p).forEach(b => b.onclick = () => { setDock(b.dataset.dock); closePop() });
       $('#tp-stylus', p).onchange = e => { prefs.stylusOnly = e.target.checked; savePrefs() };
+      $('#tp-snap', p).onchange = e => { prefs.snap = e.target.checked; savePrefs() };
       $('#tp-clear', p).onclick = () => { closePop(); if (!M || !M.strokes.length) return; const op = {rm:M.strokes.slice(), add:[]}; change(op); record(op); commit(); toast('Cleared the ink on this page. Undo brings it back.') };
     });
   }
@@ -261,7 +263,7 @@ const Ink = (() => {
     if (ro) ro.disconnect();
     closeVoice(); closePop();
     const ed = $('#ed'), paper = $('#paper');
-    ed.insertAdjacentHTML('beforeend', `<canvas class="ink-base" id="ink-base"></canvas><canvas class="ink-live" id="ink-live"></canvas><div class="pins" id="pins"></div><div class="selbar" id="selbar" hidden></div>`);
+    ed.insertAdjacentHTML('beforeend', `<canvas class="ink-base" id="ink-base"></canvas><canvas class="ink-live" id="ink-live"></canvas><div class="inkann" id="inkann"></div><div class="pins" id="pins"></div><div class="selbar" id="selbar" hidden></div>`);
     const key = keyOf(nb, page);
     if (!S.ink.has(key)) S.ink.set(key, []);
     S.ink.get(key).forEach(s => { if (!s.i) s.i = sid() });
@@ -280,7 +282,7 @@ const Ink = (() => {
     lv.addEventListener('pointermove', onMove);
     lv.addEventListener('pointerup', onUp);
     lv.addEventListener('pointercancel', onUp);
-    ro = new ResizeObserver(() => { size(); redraw(); renderPins(); if (sel) drawSel() });
+    ro = new ResizeObserver(() => { size(); redraw(); renderPins(); renderAnn(); if (sel) drawSel() });
     ro.observe(ed);
     updateMinHeight();
   }
@@ -319,13 +321,13 @@ const Ink = (() => {
     M.ta.style.minHeight = Math.round(need) + 'px';
     autosize();
   }
-  function refresh(){ if (M){ updateMinHeight(); size(); redraw(); renderPins(); if (sel) drawSel() } }
-  function cancelActive(){ if (!M || !act) return; if (act.kind === 'draw' || act.kind === 'lasso'){ act = null; liveCtx() } else if (act.kind === 'erase'){ const a = act; act = null; liveCtx(); if (a.removed.length){ record({rm:a.removed, add:[]}); commit() } } else act = null }
+  function refresh(){ if (M){ updateMinHeight(); size(); redraw(); renderPins(); renderAnn(); if (sel) drawSel() } }
+  function cancelActive(){ if (!M || !act) return; clearTimeout(act.holdT); if (act.kind === 'draw' || act.kind === 'lasso'){ act = null; liveCtx() } else if (act.kind === 'erase'){ const a = act; act = null; liveCtx(); if (a.removed.length){ record({rm:a.removed, add:[]}); commit() } } else act = null }
   function remoteRefresh(key){
     if (!M || M.key !== key) return;
     M.strokes = S.ink.get(key) || [];
     if (sel){ const ids = new Set(M.strokes.map(s => s.i)); if ([...sel.set].some(s => !ids.has(s.i))) clearSel() }
-    redraw(); updateMinHeight();
+    redraw(); updateMinHeight(); renderAnn();
   }
 
   /* ---------- pointer handling ---------- */
@@ -349,7 +351,7 @@ const Ink = (() => {
     e.preventDefault(); closeVoice(); closePop();
     M.live.setPointerCapture(e.pointerId);
     const p = local(e), t = prefs.tool;
-    if (PENS.includes(t)){ act = {kind:'draw', id:e.pointerId, s:{i:sid(), t, c:colorFor(t), w:sizeFor(t), p:[]}}; addPt(act.s, p); drawLive() }
+    if (PENS.includes(t)){ act = {kind:'draw', id:e.pointerId, s:{i:sid(), t, c:colorFor(t), w:sizeFor(t), p:[]}}; addPt(act.s, p); drawLive(); armSnap() }
     else if (t === 'eraser'){ act = {kind:'erase', id:e.pointerId, removed:[]}; eraseAt(p); drawEraser(p) }
     else if (t === 'lasso'){
       if (sel && p[0] >= sel.box[0] && p[0] <= sel.box[2] && p[1] >= sel.box[1] && p[1] <= sel.box[3]){ act = {kind:'move', id:e.pointerId, start:p, dx:0, dy:0}; $('#selbar').hidden = true; redraw() }
@@ -360,7 +362,7 @@ const Ink = (() => {
     if (!act || e.pointerId !== act.id) return;
     if (act.kind === 'scroll'){ window.scrollBy(0, act.y - e.clientY); act.y = e.clientY; return }
     let evs = e.getCoalescedEvents ? e.getCoalescedEvents() : []; if (!evs.length) evs = [e];
-    if (act.kind === 'draw'){ evs.forEach(ev => addPt(act.s, local(ev))); drawLive() }
+    if (act.kind === 'draw'){ if (act.snapped) return; const n0 = act.s.p.length; evs.forEach(ev => addPt(act.s, local(ev))); if (act.s.p.length !== n0) armSnap(); drawLive() }
     else if (act.kind === 'erase'){ let p; evs.forEach(ev => { p = local(ev); eraseAt(p) }); drawEraser(p) }
     else if (act.kind === 'lasso'){ const p = local(e), last = act.path[act.path.length - 1]; if (Math.hypot(p[0] - last[0], p[1] - last[1]) > 3) act.path.push(p); drawLasso() }
     else if (act.kind === 'move'){ const p = local(e); act.dx = p[0] - act.start[0]; act.dy = p[1] - act.start[1]; drawMove() }
@@ -369,8 +371,9 @@ const Ink = (() => {
     if (!act || e.pointerId !== act.id) return;
     const a = act; act = null;
     if (a.kind === 'draw'){
+      clearTimeout(a.holdT);
       liveCtx();
-      a.s.p = simplify(a.s.p);
+      if (!a.snapped) a.s.p = simplify(a.s.p);
       const op = {rm:[], add:[a.s]}; change(op); record(op);
       const y = maxY([a.s]);
       if ((y + 160) * M.k > M.h){ M.page.h = Math.round(y + 520); Store.put(M.nb) }
@@ -492,7 +495,7 @@ const Ink = (() => {
   function change(op){ const ids = new Set(op.rm.map(s => s.i)); setStrokes(M.strokes.filter(s => !ids.has(s.i)).concat(op.add)) }
   function record(op){ if (M) Hist.push(M.key, {k:'ink', op}) }
   function applyOp(op){ if (!M) return; change(op); clearSel(); commit() }
-  function commit(){ redraw(); Store.putInk(M.key, M.strokes); updateMinHeight(); Hist.buttons(); if (M.nb.example){ M.nb.example = false; Store.put(M.nb) } }
+  function commit(){ redraw(); Store.putInk(M.key, M.strokes); updateMinHeight(); Hist.buttons(); scheduleRecog(); if (M.nb.example){ M.nb.example = false; Store.put(M.nb) } }
 
   /* ---------- voice notes ---------- */
   function initVoice(d, t){
@@ -594,14 +597,8 @@ const Ink = (() => {
     if (!list.length){ toast(onlySel ? 'Select some handwriting first.' : 'There is no handwriting on this page yet. Write with a pen first.'); return }
     const lim = await S.sample.limits().catch(() => null);
     if (!lim || !lim.images){ toast("Handwriting conversion isn't available in this view."); return }
-    let b = [Infinity, Infinity, -Infinity, -Infinity];
-    list.forEach(s => { const q = bbox(s); b = [Math.min(b[0], q[0]), Math.min(b[1], q[1]), Math.max(b[2], q[2]), Math.max(b[3], q[3])] });
-    const pad = 24, w = b[2] - b[0] + pad * 2, h = b[3] - b[1] + pad * 2;
-    const sc = Math.min(2, 1600 / Math.max(w, h));
-    const c = document.createElement('canvas'); c.width = Math.ceil(w * sc); c.height = Math.ceil(h * sc);
-    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
-    list.forEach(s => drawStroke(g, s, sc, '#111111', {dx:pad - b[0], dy:pad - b[1], color: s.c === 'auto' || luminance(s.c) > 0.75 ? '#111111' : undefined}));
-    const blob = await new Promise(r => c.toBlob(r, 'image/png'));
+    const b = boxOf(list);
+    const blob = await inkBlob(list);
     const cb = $('#tb-convert'); if (cb) cb.classList.add('busy');
     toast('Reading your handwriting…');
     const prompt = `Transcribe the handwriting in this image into plain text for a notes app.
@@ -621,6 +618,26 @@ Reply with only the transcription.`;
     text = text.replace(/^```[a-z]*\n?|\n?```$/gi, '').trim();
     if (!text){ toast("Couldn't read any handwriting there."); return }
     if (!M) return;
+    const add = placeText(list, text, b);
+    toast(`Converted ${add} line${add === 1 ? '' : 's'} to text. Undo brings the handwriting back.`);
+    renderNotes();
+  }
+  function boxOf(list){
+    let b = [Infinity, Infinity, -Infinity, -Infinity];
+    list.forEach(s => { const q = bbox(s); b = [Math.min(b[0], q[0]), Math.min(b[1], q[1]), Math.max(b[2], q[2]), Math.max(b[3], q[3])] });
+    return b;
+  }
+  async function inkBlob(list){
+    const b = boxOf(list);
+    const pad = 24, w = b[2] - b[0] + pad * 2, h = b[3] - b[1] + pad * 2;
+    const sc = Math.min(2, 1600 / Math.max(w, h));
+    const c = document.createElement('canvas'); c.width = Math.ceil(w * sc); c.height = Math.ceil(h * sc);
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+    list.forEach(s => drawStroke(g, s, sc, '#111111', {dx:pad - b[0], dy:pad - b[1], color: s.c === 'auto' || luminance(s.c) > 0.75 ? '#111111' : undefined}));
+    return new Promise(r => c.toBlob(r, 'image/png'));
+  }
+  // Replaces handwriting with typed text on the matching line of the page. Returns the number of lines added.
+  function placeText(list, text, b){
     const page = M.page;
     const lh = parseFloat(getComputedStyle(M.ta).lineHeight) || 34;
     const L = Math.max(0, Math.round((b[1] * M.k - lh) / lh));
@@ -632,15 +649,185 @@ Reply with only the transcription.`;
     page.text = lines.join('\n');
     const ids = new Set(list.map(s => s.i));
     const op = {rm:M.strokes.filter(s => ids.has(s.i)), add:[]}; change(op); clearSel();
+    page.inkmeta = (page.inkmeta || []).filter(g => !g.ids.some(id => ids.has(id)));
     Hist.push(M.key, {k:'multi', list:[Hist.textEntry(beforeText, page.text), {k:'ink', op}]});
     Store.putInk(M.key, M.strokes); Store.put(M.nb, 50);
-    toast(`Converted ${add.length} line${add.length === 1 ? '' : 's'} to text. Undo brings the handwriting back.`);
+    return add.length;
+  }
+
+
+  /* ---------- shape snapping: hold the pen still at the end of a stroke ---------- */
+  function armSnap(){
+    if (!act || act.kind !== 'draw' || prefs.snap === false) return;
+    clearTimeout(act.holdT);
+    const a = act;
+    a.holdT = setTimeout(() => {
+      if (act !== a || a.snapped) return;
+      const shape = recognizeShape(a.s.p);
+      if (!shape) return;
+      a.s.p = shape.p; a.snapped = true; drawLive();
+      Hist.flash(shape.name);
+    }, 550);
+  }
+  function recognizeShape(P){
+    const pts = []; for (let i = 0; i < P.length; i += 3) pts.push([P[i] / 2, P[i+1] / 2]);
+    const n = pts.length; if (n < 6) return null;
+    const d = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+    let len = 0; for (let i = 1; i < n; i++) len += d(pts[i-1], pts[i]);
+    const xs = pts.map(p => p[0]), ys = pts.map(p => p[1]);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs), y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const w = x1 - x0, h = y1 - y0, diag = Math.hypot(w, h);
+    if (diag < 24) return null;
+    const enc = (list, close) => { const out = []; (close ? [...list, list[0]] : list).forEach(p => out.push(Math.round(p[0] * 2), Math.round(p[1] * 2), 5)); return out };
+    const first = pts[0], last = pts[n - 1], chord = d(first, last);
+    // straight line
+    let dev = 0; for (const p of pts) dev = Math.max(dev, segDist(p[0], p[1], first[0], first[1], last[0], last[1]));
+    if (chord > 24 && dev < Math.max(4, chord * 0.07)) return {name:'Line', p:enc([first, last])};
+    if (chord > Math.max(20, len * 0.2)) return null;   // open curve: leave as drawn
+    // corners of the closed shape
+    const rdp = (arr, eps) => {
+      if (arr.length < 3) return arr;
+      let md = 0, mi = 0; const a = arr[0], b = arr[arr.length - 1];
+      for (let i = 1; i < arr.length - 1; i++){ const dd = segDist(arr[i][0], arr[i][1], a[0], a[1], b[0], b[1]); if (dd > md){ md = dd; mi = i } }
+      if (md <= eps) return [a, b];
+      return [...rdp(arr.slice(0, mi + 1), eps).slice(0, -1), ...rdp(arr.slice(mi), eps)];
+    };
+    // start from the point farthest from the centroid so a corner isn't missed at the seam
+    const cx = xs.reduce((a, b) => a + b, 0) / n, cy = ys.reduce((a, b) => a + b, 0) / n;
+    let far = 0; pts.forEach((p, i) => { if (d(p, [cx, cy]) > d(pts[far], [cx, cy])) far = i });
+    const ring = [...pts.slice(far), ...pts.slice(0, far), pts[far]];
+    let corners = rdp(ring, diag * 0.08).slice(0, -1);
+    corners = corners.filter((c, i) => d(c, corners[(i + 1) % corners.length]) > diag * 0.12);
+    if (corners.length === 3) return {name:'Triangle', p:enc(corners, true)};
+    if (corners.length === 4){
+      const angOk = corners.every((c, i) => { const a = corners[(i + 3) % 4], b = corners[(i + 1) % 4]; const v1 = [a[0] - c[0], a[1] - c[1]], v2 = [b[0] - c[0], b[1] - c[1]]; const cos = (v1[0] * v2[0] + v1[1] * v2[1]) / (Math.hypot(...v1) * Math.hypot(...v2)); return Math.abs(cos) < 0.35 });
+      if (angOk){
+        const tilt = Math.abs(Math.atan2(corners[1][1] - corners[0][1], corners[1][0] - corners[0][0])) % (Math.PI / 2);
+        if (tilt < 0.2 || tilt > Math.PI / 2 - 0.2) return {name:'Rectangle', p:enc([[x0, y0], [x1, y0], [x1, y1], [x0, y1]], true)};
+      }
+      return {name:'Shape', p:enc(corners, true)};
+    }
+    // circle or ellipse
+    const ex = (x0 + x1) / 2, ey = (y0 + y1) / 2, rx = w / 2, ry = h / 2;
+    if (rx < 6 || ry < 6) return null;
+    let err = 0; for (const p of pts) err += Math.abs(Math.pow((p[0] - ex) / rx, 2) + Math.pow((p[1] - ey) / ry, 2) - 1);
+    if (err / n > 0.3) return null;
+    const round = Math.abs(rx - ry) / Math.max(rx, ry) < 0.15, r = (rx + ry) / 2;
+    const out = []; for (let i = 0; i < 72; i++){ const t = i / 72 * Math.PI * 2; out.push([ex + (round ? r : rx) * Math.cos(t), ey + (round ? r : ry) * Math.sin(t)]) }
+    return {name: round ? 'Circle' : 'Ellipse', p:enc(out, true)};
+  }
+
+  /* ---------- reading handwriting as you write ---------- */
+  let recogT = 0, recogBusy = false, recogWarned = false, annIssues = [];
+  const recogOn = () => !!(S.sample && M && !M.ro && M.nb.settings.inkRecog !== false);
+  function scheduleRecog(){ if (!recogOn()) { renderAnn(); return } clearTimeout(recogT); recogT = setTimeout(runRecog, 1300); renderAnn() }
+  const unionB = (a, b) => [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[2], b[2]), Math.max(a[3], b[3])];
+  function sameRow(a, b){ const h = Math.min(a[3] - a[1], b[3] - b[1]); return Math.min(a[3], b[3]) - Math.max(a[1], b[1]) > -Math.min(14, h * 0.25) }
+  const gapX = (a, b) => Math.max(0, Math.max(a[0], b[0]) - Math.min(a[2], b[2]));
+  function groupBox(g){ const ids = new Set(g.ids); const list = M.strokes.filter(s => ids.has(s.i)); return list.length ? boxOf(list) : null }
+  function clusters(list){
+    const cs = list.map(s => ({ids:[s.i], b:bbox(s)}));
+    let merged = true;
+    while (merged){
+      merged = false;
+      outer: for (let i = 0; i < cs.length; i++) for (let j = i + 1; j < cs.length; j++){
+        if (sameRow(cs[i].b, cs[j].b) && gapX(cs[i].b, cs[j].b) < 150){ cs[i] = {ids:[...cs[i].ids, ...cs[j].ids], b:unionB(cs[i].b, cs[j].b)}; cs.splice(j, 1); merged = true; break outer }
+      }
+    }
+    return cs;
+  }
+  async function runRecog(){
+    if (recogBusy || !recogOn()) return;
+    const page = M.page, nb = M.nb, key = M.key;
+    page.inkmeta = page.inkmeta || [];
+    const present = new Set(M.strokes.map(s => s.i));
+    page.inkmeta.forEach(g => { const n0 = g.ids.length; g.ids = g.ids.filter(id => present.has(id)); if (g.ids.length !== n0) g.stale = true });
+    page.inkmeta = page.inkmeta.filter(g => g.ids.length);
+    const owned = new Set(page.inkmeta.flatMap(g => g.ids));
+    const loose = M.strokes.filter(s => s.t !== 'highlighter' && !owned.has(s.i));
+    clusters(loose).forEach(c => {
+      const g = page.inkmeta.find(g => { const gb = groupBox(g); return gb && sameRow(gb, c.b) && gapX(gb, c.b) < 150 });
+      if (g){ g.ids.push(...c.ids); g.stale = true } else page.inkmeta.push({id:sid(), ids:c.ids, stale:true});
+    });
+    const todo = page.inkmeta.filter(g => g.stale);
+    if (!todo.length){ renderAnn(); return }
+    recogBusy = true; renderAnn();
+    for (const g of todo){
+      const ids = new Set(g.ids); const list = (S.ink.get(key) || []).filter(s => ids.has(s.i));
+      if (!list.length) continue;
+      try {
+        const r = await S.sample.json(`This image shows handwriting from a student's notes app. Read it and reply with only JSON: {"kind":"math"|"text"|"drawing"|"mixed","text":"...","drawing":"..."}
+- "text": the transcription, keeping line breaks. Write math so an app can check it: × for times, ÷ or / for division, ^ or superscript digits for powers, √ for roots, π for pi, ∫₀³ x² dx for definite integrals (∫[a,b] f dx when the bounds aren't whole numbers), ∫ f dx, d/dx (expression), lim x→a (expression), Σ(k=1→n) expression. If a line ends with = and nothing after it, keep the = at the end. Copy mistakes exactly; never correct them. Leave "text" empty for a pure drawing.
+- "drawing": if any part is a drawing, diagram, graph or shape, name it in 2 to 8 words (for example "right triangle with sides 3, 4 and 5"); otherwise "".
+- "kind": what the image mostly is.`, {images:[await inkBlob(list)], modelTier:'quick'});
+        g.kind = ['math', 'text', 'drawing', 'mixed'].includes(r && r.kind) ? r.kind : 'text';
+        g.text = String((r && r.text) || '').replace(/^```\w*\n?|\n?```$/g, '').trim();
+        g.drawing = String((r && r.drawing) || '').slice(0, 80);
+        g.at = Date.now(); delete g.err;
+      } catch (e){
+        g.err = true;
+        if (!recogWarned){ recogWarned = true; toast(e && e.code === 'not_granted' ? 'Handwriting reading is turned off because AI is off for this page.' : "Couldn't read your handwriting just now. NoteTip tries again when you write more.") }
+      }
+      g.stale = false;
+    }
+    recogBusy = false;
+    Store.put(nb, 400);
+    if (M && M.key === key){ renderAnn(); if (typeof updateBadge === 'function') updateBadge(); if (page.inkmeta.some(g => g.stale) || M.strokes.some(s => s.t !== 'highlighter' && !page.inkmeta.some(g => g.ids.includes(s.i)))) scheduleRecog() }
+  }
+  // Draws answers, checks and fixes next to recognized handwriting, and collects its problems for the red ! badge.
+  function renderAnn(){
+    annIssues = [];
+    const box = M && $('#inkann', M.ed); if (!box) return;
+    const groups = (M.page.inkmeta || []).map(g => ({g, b:groupBox(g)})).filter(x => x.b).sort((a, b) => a.b[1] - b.b[1]);
+    const opts = {rad: M.nb.settings.angles === 'rad'};
+    const lines = [], where = [];
+    groups.forEach(({g}) => { if (g.stale || !g.text || g.kind === 'drawing') return; g.text.split('\n').forEach((t, j, all) => { lines.push(t); where.push({g, j, n:all.length}) }); lines.push(''); where.push(null) });
+    const res = M.nb.settings.math === false ? [] : MathEngine.analyze(lines.join('\n'), opts);
+    const k = M.k, html = [];
+    groups.forEach(({g, b}) => {
+      if (g.stale || (recogBusy && g.stale)){ html.push(`<span class="ia-reading" style="left:${(b[2] + 8) * k}px;top:${((b[1] + b[3]) / 2) * k}px">Reading…</span>`); return }
+      if (g.drawing) html.push(`<span class="ia-draw" style="left:${b[0] * k}px;top:${(b[3] + 4) * k}px" title="Recognized drawing">${esc(g.drawing)}</span>`);
+    });
+    res.forEach((r, idx) => {
+      const w = where[idx]; if (!r || !w) return;
+      const gb = groupBox(w.g); if (!gb) return;
+      const y = (gb[1] + (w.j + 0.5) * (gb[3] - gb[1]) / w.n) * k, x = (gb[2] + 10) * k;
+      const pos = `left:${x}px;top:${y}px`;
+      if (r.kind === 'ghost' && M.nb.settings.answers !== false) html.push(`<span class="ia-ans" style="${pos}">${/^=/.test(r.ghost) ? '' : '= '}${esc(r.ghost.replace(/^=\s*/, ''))}</span>`);
+      else if (r.kind === 'solve' && M.nb.settings.answers !== false) html.push(`<span class="ia-ans small" style="${pos}">→ ${esc(r.ghost)}</span>`);
+      else if (r.kind === 'ok') html.push(`<span class="ia-ok" style="${pos}">✓</span>`);
+      else if (r.kind === 'bad' || r.kind === 'form'){
+        const fixed = MathEngine.fixFor(lines.join('\n'), idx, opts);
+        const n = annIssues.push({gid:w.g.id, j:w.j, title:r.title, msg:r.msg, src:lines[idx], fix:fixed});
+        html.push(`<span class="ia-bad" style="${pos}"><b>!</b><span>${r.fixVal ? 'should be ' + esc(r.fixVal) : esc(r.title)}</span><button class="ia-fix" data-ifix="${n - 1}">Fix</button></span>`);
+      }
+    });
+    box.innerHTML = html.join('');
+    $$('[data-ifix]', box).forEach(btn => btn.onclick = e => { e.stopPropagation(); fixInk(+btn.dataset.ifix) });
+  }
+  // Fixing handwritten math: the corrected line replaces that handwriting as typed text (undo brings the ink back).
+  async function fixInk(n){
+    const it = annIssues[n]; if (!it || !M) return;
+    const g = (M.page.inkmeta || []).find(x => x.id === it.gid); if (!g) return;
+    let fixed = it.fix;
+    if (!fixed){ fixed = await aiFixLine(it.src, it.msg, g.text.split('\n').slice(0, it.j)); if (!fixed) return }
+    const lines = g.text.split('\n'); lines[it.j] = fixed;
+    const ids = new Set(g.ids); const list = M.strokes.filter(s => ids.has(s.i)); if (!list.length) return;
+    placeText(list, lines.join('\n'), boxOf(list));
+    toast('Fixed. The corrected math is now typed on the page. Undo brings your handwriting back.');
     renderNotes();
+  }
+  function showInk(gid){
+    const g = M && (M.page.inkmeta || []).find(x => x.id === gid); if (!g) return;
+    const b = groupBox(g); if (!b) return;
+    const r = M.ed.getBoundingClientRect();
+    window.scrollTo({top:window.scrollY + r.top + b[1] * M.k - innerHeight / 3, behavior:'smooth'});
+    const gl = liveCtx(); boxOutline(gl, [b[0] - 6, b[1] - 6, b[2] + 6, b[3] + 6]); setTimeout(() => { if (!act && !sel) liveCtx() }, 1600);
   }
 
   window.addEventListener('keydown', e => { if (e.key === 'Escape'){ closeVoice(); closePop(); if (sel) clearSel() } });
   document.addEventListener('pointerdown', e => { const p = $('.vpop'); if (p && !p.contains(e.target) && !e.target.closest('.pin') && !e.target.closest('#ink-live')) closeVoice() });
 
-  return {toolbarHtml, mount, drawStroke, drawAll, strokesOf, maxY, prefs, savePrefs, isDrawing, initVoice, speak, V, TAGS, tagOf, W0, refresh, remoteRefresh, setDock, applyDockPadding, applyOp, cancelActive,
-    unmount(){ if (ro) ro.disconnect(); ro = null; closeVoice(); closePop(); M = null }};
+  return {toolbarHtml, mount, drawStroke, drawAll, strokesOf, maxY, prefs, savePrefs, isDrawing, initVoice, speak, V, TAGS, tagOf, W0, refresh, remoteRefresh, setDock, applyDockPadding, applyOp, cancelActive, inkIssues: () => annIssues, fixInk, showInk, recognizeShape,
+    unmount(){ clearTimeout(recogT); if (ro) ro.disconnect(); ro = null; closeVoice(); closePop(); M = null }};
 })();

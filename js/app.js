@@ -807,26 +807,83 @@ function renderOverlay(){
   updateBadge();
 }
 function issuesOf(res){ return res.filter(r => r && (r.kind === 'bad' || r.kind === 'form')) }
+function lineFixFor(i){ const nb = curNb(), ta = $('#ed-ta'); return nb && ta ? MathEngine.fixFor(ta.value, i, angOpt(nb)) : null }
+// Replaces one typed line with its corrected version (undoable).
+function applyLineFixes(changes){
+  const nb = curNb(), ta = $('#ed-ta'); if (!nb || !ta || !changes.length) return;
+  const before = ta.value, lines = before.split('\n');
+  changes.forEach(([i, t]) => { lines[i] = t });
+  const after = lines.join('\n');
+  Hist.commit(); ta.value = after; nb.pages[S.page].text = after; Hist.resetText(after);
+  Hist.push(nb.id + '_' + nb.pages[S.page].id, Hist.textEntry(before, after));
+  Store.put(nb, 300); autosize(); renderOverlay();
+}
+// Asks NoteTip AI for a corrected line when the mistake has no single obvious fix, then double-checks it.
+async function aiFixLine(line, problem, context){
+  if (!S.sample){ toast(window.NT_STANDALONE ? 'This one needs NoteTip AI. Open NoteTip with Claude AI from notebook Settings.' : "This one can't be fixed automatically. Edit it, or ask NoteTip AI to explain."); return null }
+  Hist.flash('Fixing…');
+  try {
+    const r = await S.sample.json(`A student wrote this line in their math notes:
+${line}
+The app's checker says: ${problem}
+${context && context.length ? 'Lines just above it:\n' + context.slice(-6).join('\n') + '\n' : ''}Write the corrected line, keeping the student's own numbers, notation and layout and changing as little as possible. Use × for times, ÷ or / for division, ^ or superscript digits for powers, √ for roots. If the line ends with an answer, make the answer correct.
+Reply with only JSON: {"line":"the corrected line"}`, {modelTier:'quick'});
+    const fixed = r && typeof r.line === 'string' ? r.line.trim() : '';
+    if (!fixed) throw {code:'invalid_json'};
+    const check = MathEngine.analyze([...(context || []), fixed].join('\n'), angOpt(curNb())).pop();
+    if (check && (check.kind === 'bad' || check.kind === 'form')){ toast("NoteTip AI's fix still didn't check out, so nothing was changed. Try Explain instead."); return null }
+    return fixed;
+  } catch (e){ toast(aiErr(e)); return null }
+}
+async function fixTypedLine(i){
+  let fixed = lineFixFor(i);
+  if (!fixed){ const ta = $('#ed-ta'); const lines = ta.value.split('\n'); const r = lastRes[i]; fixed = await aiFixLine(lines[i], r ? r.title + '. ' + r.msg : '', lines.slice(Math.max(0, i - 6), i)); if (!fixed) return }
+  applyLineFixes([[i, fixed]]); Hist.flash('Fixed');
+}
+function fixAllTyped(){
+  const nb = curNb(), ta = $('#ed-ta'); if (!nb || !ta) return 0;
+  let text = ta.value; const changes = [];
+  const res = MathEngine.analyze(text, angOpt(nb));
+  res.forEach((r, i) => {
+    if (!r || (r.kind !== 'bad' && r.kind !== 'form')) return;
+    const f = MathEngine.fixFor(text, i, angOpt(nb));
+    if (f){ const ls = text.split('\n'); ls[i] = f; text = ls.join('\n'); changes.push([i, f]) }
+  });
+  applyLineFixes(changes);
+  return changes.length;
+}
 function updateBadge(){
   const dock = $('#badge-dock'); const nb = curNb(); if (!dock || !nb) return;
   if (!nb.settings.math){ dock.innerHTML = ''; return }
-  const issues = issuesOf(lastRes);
+  const typed = issuesOf(lastRes).map(r => ({...r, fix:lineFixFor(r.line)}));
+  const inked = (Ink.inkIssues && Ink.inkIssues()) || [];
+  const total = typed.length + inked.length;
   const checked = lastRes.filter(r => r && (r.kind === 'ok' || r.kind === 'ghost')).length;
-  if (!issues.length){
+  if (!total){
     S.popOpen = false;
     dock.innerHTML = checked ? `<button class="math-badge good" title="Math checked" aria-label="${checked} lines of math checked, no problems">${ic('check')}${checked}</button>` : '';
     const b = $('.math-badge', dock); if (b) b.onclick = () => toast(`${checked} line${checked === 1 ? '' : 's'} of math checked. No mistakes found.`);
     prevIssueCount = 0; return;
   }
-  const pulse = prevIssueCount >= 0 && issues.length > prevIssueCount;
-  prevIssueCount = issues.length;
-  dock.innerHTML = `<button class="math-badge bad ${pulse ? 'pulse' : ''}" aria-expanded="${S.popOpen}" aria-label="${issues.length} math problem${issues.length === 1 ? '' : 's'} on this page"><span class="bang">!</span><span class="n">${issues.length}</span></button>
+  const pulse = prevIssueCount >= 0 && total > prevIssueCount;
+  prevIssueCount = total;
+  const fixable = typed.filter(r => r.fix).length;
+  const view = isView(nb);
+  dock.innerHTML = `<button class="math-badge bad ${pulse ? 'pulse' : ''}" aria-expanded="${S.popOpen}" aria-label="${total} math problem${total === 1 ? '' : 's'} on this page"><span class="bang">!</span><span class="n">${total}</span></button>
     <div class="math-pop" ${S.popOpen ? '' : 'hidden'} role="dialog" aria-label="Math problems">
-      <h4><span class="an an-bad" style="margin:0">!</span>${issues.length} problem${issues.length === 1 ? '' : 's'} on this page</h4>
-      ${issues.map(r => `<div class="issue"><div class="k">${esc(r.title)}<span class="ln">Line ${r.line + 1}</span></div><code>${esc(r.src)}</code><p>${esc(r.msg)}</p>
-        <div class="ia"><button class="btn" data-goto="${r.line}">Go to line</button>${S.sample ? `<button class="btn" data-ask="${r.line}">${ic('spark')}Explain</button>` : ''}</div></div>`).join('')}
+      <div class="mp-head"><h4><span class="an an-bad" style="margin:0">!</span>${total} problem${total === 1 ? '' : 's'} on this page</h4>${fixable > 1 && !view ? `<button class="btn primary" id="fix-all">${ic('check')}Fix all ${fixable}</button>` : ''}</div>
+      ${typed.map(r => `<div class="issue"><div class="k">${esc(r.title)}<span class="ln">Line ${r.line + 1}</span></div><code>${esc(r.src)}</code><p>${esc(r.msg)}</p>
+        ${r.fix ? `<div class="fixprev">${ic('check')}<code>${esc(r.fix.trim())}</code></div>` : ''}
+        <div class="ia">${view ? '' : r.fix ? `<button class="btn primary" data-fix="${r.line}">Fix</button>` : S.sample || window.NT_STANDALONE ? `<button class="btn primary" data-fix="${r.line}">${ic('spark')}Fix with NoteTip AI</button>` : ''}<button class="btn" data-goto="${r.line}">Go to line</button>${S.sample ? `<button class="btn" data-ask="${r.line}">${ic('spark')}Explain</button>` : ''}</div></div>`).join('')}
+      ${inked.map((r, n) => `<div class="issue"><div class="k">${esc(r.title)}<span class="ln">Handwriting</span></div><code>${esc(r.src)}</code><p>${esc(r.msg)}</p>
+        ${r.fix ? `<div class="fixprev">${ic('check')}<code>${esc(r.fix.trim())}</code></div>` : ''}
+        <div class="ia">${view ? '' : `<button class="btn primary" data-inkfix="${n}">${r.fix ? 'Fix' : ic('spark') + 'Fix with NoteTip AI'}</button>`}<button class="btn" data-inkshow="${esc(r.gid)}">Show me</button></div></div>`).join('')}
     </div>`;
   $('.math-badge', dock).onclick = e => { e.stopPropagation(); S.popOpen = !S.popOpen; updateBadge() };
+  const fa = $('#fix-all', dock); if (fa) fa.onclick = () => { const n = fixAllTyped(); S.popOpen = false; updateBadge(); Hist.flash(`Fixed ${n}`) };
+  $$('[data-fix]', dock).forEach(b => b.onclick = async () => { b.disabled = true; await fixTypedLine(+b.dataset.fix); S.popOpen = issuesOf(lastRes).length + ((Ink.inkIssues && Ink.inkIssues().length) || 0) > 0; updateBadge() });
+  $$('[data-inkfix]', dock).forEach(b => b.onclick = async () => { b.disabled = true; S.popOpen = false; await Ink.fixInk(+b.dataset.inkfix) });
+  $$('[data-inkshow]', dock).forEach(b => b.onclick = () => { S.popOpen = false; updateBadge(); Ink.showInk(b.dataset.inkshow) });
   $$('[data-goto]', dock).forEach(b => b.onclick = () => { S.popOpen = false; updateBadge(); gotoLine(+b.dataset.goto) });
   $$('[data-ask]', dock).forEach(b => b.onclick = () => {
     const r = lastRes[+b.dataset.ask]; S.popOpen = false; updateBadge();
@@ -872,6 +929,7 @@ function openSettings(){
     <div class="field"><span class="lbl">Cover</span>${swatchRow('cover', nb.cover)}</div>
     <div class="field"><span class="lbl">Math</span>
       ${tog('math', 'Check my math', 'Marks wrong answers and badly written equations with a red ! on the page.')}
+      ${tog('inkRecog', 'Read handwriting as I write', 'After you write with a pen, NoteTip AI reads it: math gets solved and checked next to your ink, and drawings get a label.', s.inkRecog !== false)}
       ${tog('answers', 'Solve as I write', 'End a line with = to see the answer, including integrals and derivatives. Press Tab to write it in.')}
       <div class="toggle"><div class="t"><b>Angles for sin, cos, tan</b><span>Calculus always uses radians.</span></div>${seg('angles', [['deg','Degrees'],['rad','Radians']])}</div>
     </div>
@@ -904,7 +962,7 @@ function openSettings(){
   $$('[data-tog]', sh).forEach(b => b.onclick = () => {
     const k = b.dataset.tog;
     if (b.dataset.scope === 'ink'){ Ink.prefs[k] = !Ink.prefs[k]; Ink.savePrefs(); b.classList.toggle('on', Ink.prefs[k]); b.setAttribute('aria-checked', String(Ink.prefs[k])); return }
-    s[k] = !(k === 'colors' ? s[k] !== false : s[k]); b.classList.toggle('on', s[k]); b.setAttribute('aria-checked', String(s[k])); apply();
+    s[k] = !((k === 'colors' || k === 'inkRecog') ? s[k] !== false : s[k]); b.classList.toggle('on', s[k]); b.setAttribute('aria-checked', String(s[k])); apply();
   });
   $('[data-sw="cover"]', sh).onclick = e => { const b = e.target.closest('[data-c]'); if (!b) return; nb.cover = b.dataset.c; $$('.sw', sh).forEach(x => x.classList.toggle('on', x === b)); Store.put(nb, 300); renderSidebar() };
   $('#sh-export', sh).onclick = () => { closeSheet(); IO.openExport(nb, 'export') };
@@ -1096,7 +1154,7 @@ function renderOverview(){
   const nb = curNb();
   const words = nb.pages.reduce((n, p) => n + (p.text.match(/\S+/g) || []).length, 0);
   let eqs = 0; const allIssues = [];
-  nb.pages.forEach((p, pi) => MathEngine.analyze(p.text, angOpt(nb)).forEach(r => { if (!r) return; if (r.kind !== 'solve') eqs++; if (r.kind === 'bad' || r.kind === 'form') allIssues.push({...r, page:pi}) }));
+  nb.pages.forEach((p, pi) => MathEngine.analyze(p.text, angOpt(nb)).forEach(r => { if (!r) return; if (r.kind !== 'solve') eqs++; if (r.kind === 'bad' || r.kind === 'form') allIssues.push({...r, page:pi, fix:MathEngine.fixFor(p.text, r.line, angOpt(nb))}) }));
   const ov = nb.overview; const busy = S.aiBusy.overview === nb.id;
   const stale = ov && nb.updatedAt > ov.at + 2000;
   const tagged = {}; nb.pages.forEach((p, pi) => p.text.split('\n').forEach(l => { const t = Ink.tagOf(l); if (t && t !== 'head'){ (tagged[t] = tagged[t] || []).push({text:l.replace(Ink.TAGS.find(x => x.k === t).re, ''), page:pi}) } }));
@@ -1122,7 +1180,7 @@ function renderOverview(){
         `<p class="muted" style="margin:0">${!S.sample && window.NT_STANDALONE ? ONLINE_NOTE + '</p><p style="margin:8px 0 0">' + onlineBtn() : S.sample ? 'NoteTip AI reads every page and voice note, then writes a short summary, the key points, terms to know and what to review next.' : "NoteTip AI summaries need you to be signed in. Sign in to your account to create one. Everything else on this page works without it."}</p>`}</div>
     </div>
     ${Object.keys(tagged).length ? `<div class="card"><h3>Color-coded notes</h3><div class="tag-groups">${Ink.TAGS.filter(t => tagged[t.k]).map(t => `<div class="tag-group"><div class="tg-head"><i class="hl hl-${t.k}">${t.label}</i><span class="note">${tagged[t.k].length}</span></div><ul>${tagged[t.k].slice(0, 12).map(x => `<li>${esc(x.text)}</li>`).join('')}</ul></div>`).join('')}</div></div>` : ''}
-    ${allIssues.length ? `<div class="card"><h3>Math to fix</h3>${allIssues.map(r => `<div class="issue"><div class="k">${esc(r.title)}<span class="ln">Page ${r.page + 1}, line ${r.line + 1}</span></div><code>${esc(r.src)}</code><p>${esc(r.msg)}</p><div class="ia"><button class="btn" data-fix="${r.page}:${r.line}">Go to line</button></div></div>`).join('')}</div>` : ''}
+    ${allIssues.length ? `<div class="card"><h3>Math to fix</h3>${allIssues.map(r => `<div class="issue"><div class="k">${esc(r.title)}<span class="ln">Page ${r.page + 1}, line ${r.line + 1}</span></div><code>${esc(r.src)}</code><p>${esc(r.msg)}</p>${r.fix ? `<div class="fixprev">${ic('check')}<code>${esc(r.fix.trim())}</code></div>` : ''}<div class="ia">${r.fix && !isView(nb) ? `<button class="btn primary" data-ovfix="${r.page}:${r.line}">Fix</button>` : ''}<button class="btn" data-fix="${r.page}:${r.line}">Go to line</button></div></div>`).join('')}</div>` : ''}
     ${voices.length ? `<div class="card"><h3>Voice notes</h3><div class="voice-list">${voices.map(v => `<div class="vitem"><span class="pin-n">${v.n}</span><div class="vt"><div>${esc(v.text)}</div><div class="note">Page ${v.page + 1} · ${new Date(v.at).toLocaleString(undefined, {month:'short', day:'numeric', hour:'numeric', minute:'2-digit'})}</div></div>${Ink.V.t ? `<button class="btn" data-vplay="${v.id}">${I.play}Play</button>` : ''}</div>`).join('')}</div></div>` : ''}
     <div class="card"><h3>Pages</h3><div class="outline">${nb.pages.map((p, i) => {
       const lines = p.text.split('\n').map(l => l.trim()).filter(Boolean);
@@ -1131,6 +1189,7 @@ function renderOverview(){
     }).join('')}</div></div>
   </div>`;
   $$('[data-page]').forEach(b => b.onclick = () => { S.page = +b.dataset.page; S.tab = 'notes'; renderNotebook() });
+  $$('[data-ovfix]').forEach(b => b.onclick = () => { const [pg, ln] = b.dataset.ovfix.split(':').map(Number); const pgObj = nb.pages[pg]; const f = MathEngine.fixFor(pgObj.text, ln, angOpt(nb)); if (!f) return; const ls = pgObj.text.split('\n'); ls[ln] = f; pgObj.text = ls.join('\n'); Store.put(nb, 300); toast('Fixed: ' + f.trim()); renderOverview() });
   $$('[data-fix]').forEach(b => b.onclick = () => { const [pg, ln] = b.dataset.fix.split(':').map(Number); S.page = pg; S.tab = 'notes'; renderNotebook(); setTimeout(() => gotoLine(ln), 50) });
   $$('[data-vplay]').forEach(b => b.onclick = () => { const v = voices.find(x => x.id === b.dataset.vplay); if (v) Ink.speak(v.text, 'ov:' + v.id) });
   const g = $('#ov-gen'); if (g) g.onclick = () => genOverview(nb);
